@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/.vscode
+/src/caserver/.vs
+/src/caserver/build
+/src/caserver/out/build/x64-debug
