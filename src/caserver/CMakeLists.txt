@@ -12,21 +12,17 @@ endif()
 project ("caserver")
 
 # Deps
-find_package(oatpp CONFIG REQUIRED)
-find_package(oatpp-swagger CONFIG REQUIRED)
-
+find_package(OpenSSL REQUIRED)
 
 # Add source to this project's executable.
 add_executable (caserver 
 	"src/caserver.cpp" 
 	"src/caserver.h"
-	"src/defines.h"
-	"src/models/status_response.h"
-	"src/handlers/error_handler.cpp"
-	"src/handlers/error_handler.h"
- "src/controllers/static_controller.h" "src/components/swagger.h" "src/components/app.h")
+	"src/crypto/provider.h"
+	"src/crypto/provider.cpp"
+)
 
-target_link_libraries(caserver PRIVATE oatpp::oatpp oatpp::oatpp-swagger)
+target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET caserver PROPERTY CXX_STANDARD 20)

@@ -2,21 +2,17 @@
 //
 
 #include "caserver.h"
-#include "components/app.h"
-#include "controllers/static_controller.h"
+#include "crypto/provider.h"
 
 using namespace std;
 
-void run()
-{
-	caserv::components::application app;
-
-	OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
-	oatpp::web::server::api::Endpoints endpoints;
-}
-
 int main()
 {
+	ENGINE* engine = ENGINE_by_id("gost");
+
+	Provider provider{engine};
+	auto kp = provider.GenerateKeyPair();
+
 	cout << "Hello CMake." << endl;
 	return 0;
 }

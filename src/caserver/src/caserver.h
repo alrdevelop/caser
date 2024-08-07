@@ -4,7 +4,4 @@
 #pragma once
 
 #include <iostream>
-#include <oatpp-swagger/Controller.hpp>
-#include <oatpp/network/Server.hpp>
-
 // TODO: Reference additional headers your program requires here.
