@@ -7,3 +7,4 @@
 /src/caserver/.vs
 /src/caserver/build
 /src/caserver/out/build/x64-debug
+/src/caserver/CMakeSettings.json
