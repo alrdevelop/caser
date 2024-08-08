@@ -8,3 +8,5 @@
 /src/caserver/build
 /src/caserver/out/build/x64-debug
 /src/caserver/CMakeSettings.json
+/src/caserver/docker-compose.debug.yml
+/src/caserver/docker-compose.yml
