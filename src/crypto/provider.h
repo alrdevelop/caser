@@ -2,10 +2,10 @@
 #define _CASERV_PROVIDER_H_
 
 #include <openssl/engine.h>
-#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
-
+#include <openssl/md5.h>
 
 class Provider
 {
@@ -14,7 +14,7 @@ public:
 	~Provider() = default;
 
 	EVP_PKEY* GenerateKeyPair();
-	X509* GenerateX509Certitificate(EVP_PKEY* key, EVP_MD* md);
+	X509* GenerateX509Certitificate(EVP_PKEY* key, const EVP_MD* md);
 
 private:
 	ENGINE* _engine{nullptr};

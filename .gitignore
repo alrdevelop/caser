@@ -32,3 +32,5 @@
 *.app
 /.vs
 /src/.vs
+/src/out
+/src/obj

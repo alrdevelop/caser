@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  caserver:
+    image: caserver
+    hostname: caserver
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+
+networks:
+  default:
+    external: true
+    name: dawn_infrastructure

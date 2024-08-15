@@ -16,10 +16,10 @@ find_package(OpenSSL REQUIRED)
 
 # Add source to this project's executable.
 add_executable (caserver 
-	"src/caserver.cpp" 
-	"src/caserver.h"
-	"src/crypto/provider.h"
-	"src/crypto/provider.cpp"
+	"caserver.cpp" 
+	"caserver.h"
+	"crypto/provider.h"
+	"crypto/provider.cpp"
 )
 
 target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto)

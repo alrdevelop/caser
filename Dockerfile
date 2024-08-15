@@ -14,11 +14,14 @@ RUN git clone https://github.com/etr/libhttpserver.git \
 RUN git clone https://github.com/gost-engine/engine && cd engine && git submodule update --init \
     && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release .. \
+    && cmake --build . --config Release \
     && cmake --build . --target install --config Release
     
 
 #Insatll new dynamic libraries
 RUN ldconfig
+
+COPY ./conf/openssl.conf /usr/lib/ssl/openssl.cnf
 
 #Build and run app
 COPY ./src /usr/src/caserver
