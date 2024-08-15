@@ -1,12 +1,34 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+# Prerequisites
+*.d
 
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
 /.vs
-/.vscode
-/src/caserver/.vs
-/src/caserver/build
-/src/caserver/out/build/x64-debug
-/src/caserver/CMakeSettings.json
-/src/caserver/docker-compose.debug.yml
-/src/caserver/docker-compose.yml
+/src/.vs
