@@ -16,8 +16,7 @@ find_package(OpenSSL REQUIRED)
 
 # Add source to this project's executable.
 add_executable (caserver 
-	"caserver.cpp" 
-	"caserver.h"
+	"main.cpp" 
 	"crypto/provider.h"
 	"crypto/provider.cpp"
 )

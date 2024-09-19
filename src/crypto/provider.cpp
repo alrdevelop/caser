@@ -1,10 +1,9 @@
 #include "provider.h"
 #include <iostream>
-
-#ifndef EVP_PKEY_CTRL_GOST_PARAMSET
-# define EVP_PKEY_CTRL_GOST_PARAMSET (EVP_PKEY_ALG_CTRL+1)
-#endif // !EVP_PKEY_CTRL_GOST_PARAMSET
+#include <memory>
 #include <vector>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
 
 
 Provider::Provider(ENGINE* pEngine) : _engine(pEngine)
@@ -13,38 +12,14 @@ Provider::Provider(ENGINE* pEngine) : _engine(pEngine)
 
 EVP_PKEY* Provider::GenerateKeyPair()
 {
-    EVP_PKEY* result = nullptr;
+    EVP_PKEY* pkey = EVP_PKEY_new();
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(NID_id_GostR3410_2012_256, _engine);
-
-    EVP_PKEY_paramgen_init(ctx);
-
-    EVP_PKEY_CTX_ctrl(ctx, NID_id_GostR3410_2012_256, EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_GOST_PARAMSET, NID_id_tc26_gost_3410_2012_256_paramSetA, NULL);
-
-    auto initResult = EVP_PKEY_keygen_init(ctx);
-
-    if (initResult <= 0)
-    {
-        if (ctx)
-        {
-            EVP_PKEY_CTX_free(ctx);
-        }
-        ERR_print_errors_fp(stderr);
-        std::cout << "EVP_PKEY_keygen_init: " << initResult << std::endl;
-        return nullptr;
-    }
-
-    auto genResult = EVP_PKEY_keygen(ctx, &result);
-    if (genResult <= 0)
-    {
-        if (ctx)
-        {
-            EVP_PKEY_CTX_free(ctx);
-        }
-        ERR_print_errors_fp(stderr);
-        std::cout << "EVP_PKEY_keygen: " << genResult << std::endl;
-        return nullptr;
-    }
-    return result;
+    OSSL_CHECK(EVP_PKEY_paramgen_init(ctx), ctx);
+    OSSL_CHECK(EVP_PKEY_CTX_ctrl(ctx, NID_id_GostR3410_2012_256, EVP_PKEY_OP_PARAMGEN, EVP_PKEY_CTRL_GOST_PARAMSET, NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet, NULL), ctx);
+    OSSL_CHECK(EVP_PKEY_paramgen_init(ctx), ctx);
+    OSSL_CHECK(EVP_PKEY_keygen_init(ctx), ctx);
+    OSSL_CHECK(EVP_PKEY_keygen(ctx, &pkey), ctx);
+    return pkey;
 }
 
 
@@ -86,13 +61,14 @@ X509* Provider::GenerateX509Certitificate(EVP_PKEY* key, const EVP_MD* md)
     X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char*)"localhost", -1, -1, 0);
 
     /* Now set the issuer name. */
-    X509_set_issuer_name(cert, name);
+    // OSSL_CHECK(X509_set_issuer_name(cert, name), nullptr);
 
-    if (X509_sign(cert, key, md) <= 0)
-    {
-        ERR_print_errors_fp(stderr);
-        X509_free(cert);
-        return nullptr;
-    }
+    // OSSL_CHECK(X509_sign(cert, key, md), nullptr);
+    // if (X509_sign(cert, key, md) <= 0)
+    // {
+    //     ERR_print_errors_fp(stderr);
+    //     X509_free(cert);
+    //     return nullptr;
+    // }
     return cert;
 }

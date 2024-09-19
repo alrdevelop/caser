@@ -31,6 +31,8 @@
 *.out
 *.app
 /.vs
+/.cache
+/build
 /src/.vs
 /src/out
 /src/obj
