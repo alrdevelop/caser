@@ -23,6 +23,8 @@ namespace openssl {
 using EvpPkeyUPtr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
 using X509Uptr = std::unique_ptr<X509, decltype(&::X509_free)>;
 
+#define SERIAL_LEN 16 //128 bit
+
 struct PkeyParams {
   int keytype;
   int p1;
@@ -85,9 +87,10 @@ public:
       // set serial number
       // ASN1_INTEGER_set(X509_get_serialNumber(cert), 1);
       ASN1_STRING *serialNumber = X509_get_serialNumber(cert);
-      std::vector<uint8_t> serial(20);
-      OSSL_CHECK(RAND_bytes(serial.data(), 20));
-      OSSL_CHECK(ASN1_STRING_set(serialNumber, serial.data(), 20));
+      auto serialLen = 16;
+      std::vector<uint8_t> serial(SERIAL_LEN);
+      OSSL_CHECK(RAND_bytes(serial.data(), SERIAL_LEN));
+      OSSL_CHECK(ASN1_STRING_set(serialNumber, serial.data(), SERIAL_LEN));
 
       // 0x00 - v1, 0x01 - v2, 0x02 - v3
       OSSL_CHECK(X509_set_version(cert, 0x02));
@@ -98,9 +101,11 @@ public:
 
       // Set certificate data
       X509_NAME *name = X509_get_subject_name(cert);
-      NameAddEntry(name, "C", req.country.c_str());
-      NameAddEntry(name, "CN", req.commonName.c_str());
-      NameAddEntry(name, "O", "ООО РОГА");
+      FillSubjectCommon(name, req);
+      FillSubjectPhysicalPerson(name, req);
+      // NameAddEntry(name, "O", req.organizationName);
+      // NameAddEntry(name, "OU", req.organizationUnitName);
+      // NameAddEntry(name, "INN", req.inn);
 
       // set public key
       OSSL_CHECK(X509_set_pubkey(cert, key.get()));
@@ -121,7 +126,38 @@ public:
     }
   }
 
-  void NameAddEntry(X509_NAME *name, const char* field, const std::string val, int type = MBSTRING_UTF8){
+  
+private:
+
+  void FillJuridicalPersonCertificateRequest(X509_NAME* name, const contracts::JuridicalPersonCertificateRequest& req) {
+    NameAddEntry(name, "1.2.643.100.4", req.ogrn); // INN_LE
+    NameAddEntry(name, "OGRN", req.ogrn);
+    NameAddEntry(name, "O", req.organizationName);
+    NameAddEntry(name, "OU", req.organizationUnitName);
+    NameAddEntry(name, "title", req.title);
+  }
+
+  void FillIndividualEntrepreneur(X509_NAME* name, const contracts::IndividualEntrepreneurCertificateRequest& req) {
+    NameAddEntry(name, "OGRNIP", req.ogrnip);
+  }
+
+  void FillSubjectPhysicalPerson(X509_NAME* name, const contracts::PhysicalPersonCertificateRequest& req) {
+      NameAddEntry(name, "INN", req.inn);
+      NameAddEntry(name, "SNILS", req.snils);
+      NameAddEntry(name, "givenName", req.givenName);
+      NameAddEntry(name, "surname", req.surname);
+  }
+
+  void FillSubjectCommon(X509_NAME* name, const contracts::CertificateRequestBase& req) {
+      NameAddEntry(name, "CN", req.commonName);
+      NameAddEntry(name, "C", req.country);
+      NameAddEntry(name, "localityName", req.localityName);
+      NameAddEntry(name, "stateOrProvinceName", req.stateOrProvinceName);
+      NameAddEntry(name, "streetAddress", req.streetAddress);
+      NameAddEntry(name, "emailAddress", req.emailAddress);
+  }
+
+  inline void NameAddEntry(X509_NAME *name, const char* field, const std::string val, int type = MBSTRING_UTF8){
     if(val.empty()) return;
     OSSL_CHECK(X509_NAME_add_entry_by_txt(name, field, type, (unsigned char *)val.c_str(), -1, -1, 0));
   }

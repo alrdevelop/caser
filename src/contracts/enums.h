@@ -3,17 +3,36 @@
 
 namespace contracts 
 {
-    enum AlgorithmEnum
+    enum class AlgorithmEnum
     {
         GostR3410_2012_256 = 0,
         GostR3410_2012_512
     };
 
-    enum KeyUsageEnum
-    {};
+    enum class KeyUsageEnum
+    {
+        Critical = 0,
+        DigitalSignature,
+        KeyEncipherment,
+        NonRepudiation,
+        DataEncipherment,
+        KeyAgreement,
+        KeyCertSign,
+        cRLSign,
+        EncipherOnly,
+        DecipherOnly,
+    };
 
-    enum ExtendedKeyUsageEnum
-    {};
+    enum class ExtendedKeyUsageEnum
+    {
+        Critical = 0,
+        ServerAuth,
+        ClientAuth,
+        CodeSigning,
+        EmailProtection,
+        TimeStamping,
+        OCSPSigning,
+    };
 }
 
 #endif //_CASERV_CONTRACTS_ENUMS_H_

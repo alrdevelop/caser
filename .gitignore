@@ -37,3 +37,4 @@
 /src/.vs
 /src/out
 /src/obj
+.vscode/settings.json

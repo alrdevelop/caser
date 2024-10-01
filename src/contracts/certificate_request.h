@@ -8,12 +8,12 @@
 
 namespace contracts {
 
-    struct CertificateRequest {
+    struct CertificateRequestBase {
         AlgorithmEnum algorithm{AlgorithmEnum::GostR3410_2012_256};
         std::string commonName;
         std::string country{"RU"};
-        std::string stateOfProvinceName;
         std::string localityName;
+        std::string stateOrProvinceName;
         std::string streetAddress;
         std::string emailAddress;
         std::vector<KeyUsageEnum> KeyUsage;
@@ -21,12 +21,26 @@ namespace contracts {
         uint16_t ttlInDays{365};
     };
 
-    struct PhysicalPersonCertificateRequest : public CertificateRequest {
+    struct PhysicalPersonCertificateRequest : public CertificateRequestBase {
         std::string inn;
         std::string snils;
         std::string givenName;
-        std::string surName;
+        std::string surname;
     };
+
+    struct IndividualEntrepreneurCertificateRequest : public PhysicalPersonCertificateRequest {
+        std::string ogrnip;
+    };
+
+    struct JuridicalPersonCertificateRequest : public PhysicalPersonCertificateRequest {
+        std::string innLe;
+        std::string ogrn;
+        std::string organizationName;
+        std::string organizationUnitName;
+        std::string title;
+    };
+
+    typedef JuridicalPersonCertificateRequest CertificateRequest;
 
 } // namespace contracts
 

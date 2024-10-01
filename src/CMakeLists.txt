@@ -21,8 +21,6 @@ add_executable (caserver
   "common/logger.h"
   "common/string.h"
   "openssl/defines.h"
-	"crypto/provider.h"
-	"crypto/provider.cpp"
 )
 
 target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only)
