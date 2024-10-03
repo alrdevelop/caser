@@ -26,7 +26,7 @@ int main() {
     openssl::Provider provider{nullptr};
     auto kp = provider.GenerateKeyPair(contracts::AlgorithmEnum::GostR3410_2012_256);
 
-	contracts::PhysicalPersonCertificateRequest req;
+	contracts::JuridicalPersonCertificateRequest req;
 	req.commonName = "Иванов Иван Иванович";
 	req.country = "RU";
 	req.stateOrProvinceName = "78 г.Санкт-Петербург";
@@ -41,8 +41,13 @@ int main() {
 	req.surname = "Иванов";
 	req.snils = "12334536322";
 
+  req.innLe = "1234567890";
+  req.organizationName = "ООО Рога и Копыта";
+  req.organizationUnitName = "Директорат";
+  req.title = "Предводитель";
 
-    auto cert =  provider.GenerateX509Certitificate((contracts::CertificateRequest)req);
+
+  auto cert =  provider.GenerateX509Certitificate((contracts::CertificateRequest)req);
 
     // const EVP_MD* md = EVP_get_digestbyname(SN_id_GostR3411_2012_256);
     // auto cert = provider.GenerateX509Certitificate(kp, md);
