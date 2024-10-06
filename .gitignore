@@ -32,9 +32,8 @@
 *.app
 /.vs
 /.cache
-/.vscode
+#/.vscode
 /build
 /src/.vs
 /src/out
 /src/obj
-.vscode/settings.json
