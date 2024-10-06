@@ -185,7 +185,6 @@ private:
   }
 
   X509CrlUptr CreateCRL() {
-    return X509CrlUptr(X509_CRL_new());
   }
 
   inline ParamsSet Build(const CertificateRequestBase &req) {

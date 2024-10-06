@@ -32,7 +32,7 @@
 *.app
 /.vs
 /.cache
-#/.vscode
+/.vscode
 /build
 /src/.vs
 /src/out
