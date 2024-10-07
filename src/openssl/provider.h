@@ -27,6 +27,7 @@ using namespace contracts;
 
 using EvpPkeyUPtr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
 using X509Uptr = std::unique_ptr<X509, decltype(&::X509_free)>;
+using X509CrlUptr = std::unique_ptr<X509_CRL, decltype(&::X509_CRL_free)>;
 using ParamsSet = std::vector<std::pair<std::string, std::string>>;
 
 #define SERIAL_LEN 16 // 128 bit
@@ -186,6 +187,9 @@ private:
     } catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
     }
+  }
+
+  X509CrlUptr CreateCRL() {
   }
 
   inline ParamsSet Build(const CertificateRequestBase &req) {
