@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -15,7 +16,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <map>
 
 #include "defines.h"
 #include "error_text.h"
@@ -44,20 +44,25 @@ static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
      {.keytype = NID_id_GostR3410_2012_512,
       .p1 = NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet}}};
 
-static std::map<int, const char*> CaExtensions {
-  {NID_subject_key_identifier, "hash"},
-  {NID_authority_key_identifier, "keyid:always"},
-  {NID_basic_constraints, "critical,CA:false,pathlen:0"},
-  {NID_key_usage, "critical,cRLSign,digitalSignature,keyEncipherment"},
+static std::map<int, const char *> CaExtensions{
+    {NID_subject_key_identifier, "hash"},
+    {NID_authority_key_identifier, "keyid:always"},
+    {NID_basic_constraints, "critical,CA:false,pathlen:0"},
+    {NID_key_usage, "critical,cRLSign,digitalSignature,keyEncipherment"},
 };
 
-static std::map<int, const char*> ClientExtensions {
-  {NID_subject_key_identifier, "hash"},
-  {NID_authority_key_identifier, "keyid,issuer"},
-  {NID_basic_constraints, "critical"},
-  {NID_key_usage, "critical, digitalSignature"},
-  {NID_ext_key_usage, "1.2.643.2.2.34.6,1.2.643.3.88.3.6,1.2.643.3.88.1.1.1.7,1.2.643.3.88.1.1.1.9,1.2.643.3.88.1.1.1.10,1.2.643.3.88.1.1.1.11"}
-};
+static std::map<int, const char *> ClientExtensions{
+    {NID_subject_key_identifier, "hash"},
+    {NID_authority_key_identifier, "keyid,issuer"},
+    {NID_basic_constraints, "critical"},
+    {NID_key_usage, "critical, digitalSignature"},
+    {NID_ext_key_usage,
+     "1.2.643.2.2.34.6,"
+     "1.2.643.3.88.3.6,"
+     "1.2.643.3.88.1.1.1.7,"
+     "1.2.643.3.88.1.1.1.9,"
+     "1.2.643.3.88.1.1.1.10,"
+     "1.2.643.3.88.1.1.1.11"}};
 
 class Provider {
 public:
@@ -144,7 +149,6 @@ private:
         NameAddEntry(name, subjPair.first.c_str(), subjPair.second);
       }
 
-
       // set public key
       OSSL_CHECK(X509_set_pubkey(cert, key.get()));
 
@@ -161,17 +165,18 @@ private:
       X509V3_CTX ctx;
       // todo: CRL using
       X509V3_set_ctx(&ctx, issuer, cert, nullptr, nullptr, 0);
-      for(auto extIt : extensions) {
-        auto ext = X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second);
-        if(ext != nullptr) {
+      for (auto extIt : extensions) {
+        auto ext =
+            X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second);
+        if (ext != nullptr) {
           OSSL_CHECK(X509_add_ext(cert, ext, -1));
           X509_EXTENSION_free(ext);
         } else {
-          LOG_WARNING("Invalid params in certificate extension {} : {}.", extIt.first, extIt.second);
+          LOG_WARNING("Invalid params in certificate extension {} : {}.",
+                      extIt.first, extIt.second);
           LOG_WARNING(openssl::get_errors_string());
         }
       }
-
 
       // sign cert
       OSSL_CHECK(X509_sign(cert, key.get(), md));
@@ -229,7 +234,6 @@ private:
     OSSL_CHECK(X509_NAME_add_entry_by_txt(
         name, field, type, (unsigned char *)val.c_str(), -1, -1, 0));
   }
-
 
 private:
   ENGINE *_engine;
