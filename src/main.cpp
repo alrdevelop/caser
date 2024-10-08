@@ -15,18 +15,34 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/txt_db.h>
+#include <ostream>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+#include <utility>
 #include <vector>
 
 using namespace std;
+
+
+void print(const std::pair<openssl::X509Uptr, openssl::EvpPkeyUPtr>& data) {
+  for(auto v : openssl::get_private_key_data(data.second.get())) {
+    cout << v;
+  }
+  for(auto v : openssl::get_public_key_data(data.second.get())) {
+    cout << v;
+  }
+  for(auto v : openssl::get_certificate_data(data.first.get())) {
+    cout << v;
+  }
+}
 
 int main() {
 
   try {
     // OPENSSL_add_all_algorithms_conf();
     // OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
+    spdlog::set_level(spdlog::level::level_enum::debug);
     openssl::Provider provider{nullptr};
-    auto kp =
-        provider.GenerateKeyPair(contracts::AlgorithmEnum::GostR3410_2012_256);
 
     contracts::JuridicalPersonCertificateRequest req;
     req.commonName = "Иванов Иван Иванович";
@@ -51,12 +67,14 @@ int main() {
     req.organizationUnitName = "Директорат";
     req.title = "Предводитель";
 
-    auto cert =
-        provider.GenerateX509Certitificate((contracts::CertificateRequest)req);
-    auto result = openssl::get_certificate_data(cert.get());
-    for (auto it : result) {
-      cout << it;
+    auto rootCert = provider.GenerateX509Certitificate((contracts::CertificateRequest)req);
+    auto client = provider.GenerateX509Certitificate(req, rootCert.first.get(), rootCert.second.get());
+    //print(rootCert);
+    //print(client);
+    for(auto v : openssl::create_pfx(client.second.get(), client.first.get(), "test", "123")){
+      cout << v;
     }
+
   } catch (std::exception &ex) {
     cout << ex.what() << endl;
   }

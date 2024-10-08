@@ -14,18 +14,18 @@ public:
   ~Database() = default;
 };
 
-char *DbGetString(void *db, const char *section, const char *value) {
-  LOG_INFO("DbGetString");
+char *db_get_string(void *db, const char *section, const char *value) {
+  LOG_DEBUG("db_get_string. Params: section - {}, value - {}.", section, value);
   return nullptr;
 }
-STACK_OF(CONF_VALUE) * DbGetSection(void *db, const char *section) {
-  LOG_INFO("DbGetSection");
+STACK_OF(CONF_VALUE) * db_get_section(void *db, const char *section) {
+  LOG_DEBUG("db_get_section. Parmas: section - {}.", section);
   return nullptr;
 }
 
-void DbFreeString(void *db, char *str) { LOG_INFO("DbFreeString"); }
+void db_free_string(void *db, char *str) { LOG_DEBUG("db_free_string"); }
 
-void DbFreeSection(void *db, STACK_OF(CONF_VALUE)* section) { LOG_INFO("DbFreeSection"); }
+void db_free_section(void *db, STACK_OF(CONF_VALUE)* section) { LOG_DEBUG("db_free_section"); }
 
 } // namespace openssl
 
