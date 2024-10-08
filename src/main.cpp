@@ -67,13 +67,11 @@ int main() {
     req.organizationUnitName = "Директорат";
     req.title = "Предводитель";
 
-    auto rootCert = provider.GenerateX509Certitificate((contracts::CertificateRequest)req);
+    auto rootCert = provider.GenerateX509Certitificate(req);
     auto client = provider.GenerateX509Certitificate(req, rootCert.first.get(), rootCert.second.get());
-    //print(rootCert);
+    print(rootCert);
     //print(client);
-    for(auto v : openssl::create_pfx(client.second.get(), client.first.get(), "test", "123")){
-      cout << v;
-    }
+    //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), "test", "1234");
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

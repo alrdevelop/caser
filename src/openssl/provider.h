@@ -55,7 +55,7 @@ static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
 // use basic params for CA root cert
 static std::map<int, const char *> CaExtensions{
     {NID_subject_key_identifier, "hash"},
-    {NID_authority_key_identifier, "keyid:always"},
+    //{NID_authority_key_identifier, "keyid:always"},
     {NID_basic_constraints, "CA:TRUE,pathlen:0"},
     {NID_key_usage, "critical,cRLSign,digitalSignature,keyCertSign"},
     {NID_certificate_policies,
