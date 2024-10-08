@@ -5,18 +5,22 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <new>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/txt_db.h>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "db.h"
 #include "defines.h"
 #include "error_text.h"
 
@@ -37,6 +41,15 @@ struct PkeyParams {
   int p1;
 };
 
+typedef struct db_attr_st {
+  int unique_subject;
+} DB_ATTR;
+
+typedef struct ca_db_st {
+  DB_ATTR attributes;
+  TXT_DB* db;
+} CA_DB;
+
 static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
     {contracts::AlgorithmEnum::GostR3410_2012_256,
      {.keytype = NID_id_GostR3410_2012_256,
@@ -45,11 +58,13 @@ static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
      {.keytype = NID_id_GostR3410_2012_512,
       .p1 = NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet}}};
 
+// use basic params for CA root cert
 static std::map<int, const char *> CaExtensions{
     {NID_subject_key_identifier, "hash"},
     {NID_authority_key_identifier, "keyid:always"},
-    {NID_basic_constraints, "critical,CA:false,pathlen:0"},
-    {NID_key_usage, "critical,cRLSign,digitalSignature,keyEncipherment"},
+    {NID_basic_constraints, "CA:TRUE,pathlen:0"},
+    {NID_key_usage, "critical,cRLSign,digitalSignature,keyCertSign"},
+    {NID_certificate_policies, "1.2.643.100.113.1,1.2.643.100.113.2,anyPolicy"}
 };
 
 static std::map<int, const char *> ClientExtensions{
@@ -162,10 +177,20 @@ private:
 
       auto extensions = issuer == cert ? CaExtensions : ClientExtensions;
 
+
       // Add extensions
       X509V3_CTX ctx;
+      
+      openssl::Database db;
+      X509V3_CONF_METHOD conf;
+      conf.get_string = openssl::DbGetString;
+      conf.get_section = openssl::DbGetSection;
+      conf.free_string = openssl::DbFreeString;
+      conf.free_section = openssl::DbFreeSection;
       // todo: CRL using
       X509V3_set_ctx(&ctx, issuer, cert, nullptr, nullptr, 0);
+      ctx.db = &db;
+      ctx.db_meth = &conf;
       for (auto extIt : extensions) {
         auto ext =
             X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second);
@@ -173,12 +198,9 @@ private:
           OSSL_CHECK(X509_add_ext(cert, ext, -1));
           X509_EXTENSION_free(ext);
         } else {
-          LOG_WARNING("Invalid params in certificate extension {} : {}.",
-                      extIt.first, extIt.second);
-          LOG_WARNING(openssl::get_errors_string());
+          LOG_WARNING("Failed to add cerificate extensions. NID: {}, extensions: {}. Error: {}.",extIt.first, extIt.second, openssl::get_errors_string());
         }
       }
-
       // sign cert
       OSSL_CHECK(X509_sign(cert, key.get(), md));
 

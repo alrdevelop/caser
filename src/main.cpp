@@ -14,6 +14,7 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/txt_db.h>
 #include <vector>
 
 using namespace std;
@@ -21,7 +22,7 @@ using namespace std;
 int main() {
 
   try {
-    OPENSSL_add_all_algorithms_conf();
+    // OPENSSL_add_all_algorithms_conf();
     // OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     openssl::Provider provider{nullptr};
     auto kp =
