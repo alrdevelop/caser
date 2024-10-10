@@ -4,6 +4,7 @@
 #include "defines.h"
 #include <cstdint>
 #include <cstdio>
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -21,6 +22,14 @@ inline std::vector<std::uint8_t> get_certificate_data(X509* cert) {
     OSSL_CHECK(BIO_free(bio));
     return result;
 }
+
+inline X509* get_certificate(const std::vector<uint8_t>& data) {
+    auto bio = BIO_new_mem_buf(data.data(), data.size());
+    auto result = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    OSSL_CHECK(BIO_free(bio));
+    return result;
+}
+
 
 inline std::vector<std::uint8_t> get_private_key_data(EVP_PKEY* pkey){
     auto bio = BIO_new(BIO_s_mem());
@@ -40,6 +49,13 @@ inline std::vector<std::uint8_t> get_public_key_data(EVP_PKEY* pkey){
     auto result = std::vector<uint8_t>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     return result;
+}
+
+inline EVP_PKEY* get_private_key(std::vector<uint8_t>& privateKey) {
+    auto skbio = BIO_new_mem_buf(privateKey.data(), privateKey.size());
+    EVP_PKEY* pkey = PEM_read_bio_PrivateKey(skbio, nullptr, nullptr, nullptr);
+    OSSL_CHECK(BIO_free(skbio));
+    return pkey;
 }
 
 inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, const char* name, const char* password = nullptr) {

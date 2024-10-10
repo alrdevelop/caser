@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
@@ -66,11 +67,20 @@ int main() {
     req.organizationName = "ООО Рога и Копыта";
     req.organizationUnitName = "Директорат";
     req.title = "Предводитель";
+    req.algorithm = contracts::AlgorithmEnum::GostR3410_2012_512;
 
-    auto rootCert = provider.GenerateX509Certitificate(req);
-    auto client = provider.GenerateX509Certitificate(req, rootCert.first.get(), rootCert.second.get());
+
+    auto rootCert = provider.GenerateCa(req);
     print(rootCert);
-    //print(client);
+
+    auto rootPkData = openssl::get_private_key_data(rootCert.second.get());
+    auto rootCertData = openssl::get_certificate_data(rootCert.first.get());
+    auto issuerKey = openssl::get_private_key(rootPkData);
+    auto issuerCert = openssl::get_certificate(rootCertData);
+
+    req.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
+    auto client = provider.GenerateClientCertitificate(req, issuerCert, issuerKey, 0);
+    print(client);
     //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), "test", "1234");
 
   } catch (std::exception &ex) {

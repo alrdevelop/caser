@@ -6,10 +6,12 @@
 #include <map>
 #include <memory>
 #include <new>
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/txt_db.h>
 #include <openssl/x509.h>
@@ -81,15 +83,25 @@ public:
 
   ~Provider() = default;
 
-  std::pair<X509Uptr, EvpPkeyUPtr> GenerateX509Certitificate(
-      const contracts::JuridicalPersonCertificateRequest &req,
-      X509 *issuer = nullptr, EVP_PKEY *issuerKp = nullptr) {
+  std::pair<X509Uptr, EvpPkeyUPtr> GenerateClientCertitificate(
+      const contracts::JuridicalPersonCertificateRequest &req, X509 *issuer,
+      EVP_PKEY *issuerKey, int issuer_md) {
     try {
       auto subject = Build(req);
       return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       issuer, issuerKp);
+                                       issuer, issuerKey);
     } catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
+    }
+  }
+
+  std::pair<X509Uptr, EvpPkeyUPtr>
+  GenerateCa(const contracts::JuridicalPersonCertificateRequest &req) {
+    try {
+      auto subject = Build(req);
+      return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays);
+    } catch (...) {
+      throw std::runtime_error("GenerateCa failed.");
     }
   }
 
@@ -198,7 +210,17 @@ private:
         }
       }
       // sign cert
-      const EVP_MD *md = EVP_get_digestbynid(params.digest); // EVP_get_digestbyname(SN_id_GostR3411_2012_512);
+      auto pkey_nid = EVP_PKEY_base_id(issuerKp);
+      auto md_nid = NID_undef;
+      switch (pkey_nid) {
+      case NID_id_GostR3410_2012_256:
+        md_nid = NID_id_GostR3411_2012_256;
+        break;
+      case NID_id_GostR3410_2012_512:
+        md_nid = NID_id_GostR3411_2012_512;
+        break;
+      }
+      const EVP_MD *md = EVP_get_digestbynid(md_nid); 
       OSSL_CHECK(X509_sign(cert, issuerKp, md));
 
       return std::make_pair(std::move(X509Uptr(cert, ::X509_free)),
