@@ -71,7 +71,7 @@ int main() {
 
 
     auto rootCert = provider.GenerateCa(req);
-    print(rootCert);
+    //print(rootCert);
 
     auto rootPkData = openssl::get_private_key_data(rootCert.second.get());
     auto rootCertData = openssl::get_certificate_data(rootCert.first.get());
@@ -81,7 +81,7 @@ int main() {
     req.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
     auto client = provider.GenerateClientCertitificate(req, issuerCert, issuerKey, 0);
     print(client);
-    //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), "test", "1234");
+    //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), issuerCert, "test", "1234");
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

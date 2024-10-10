@@ -9,6 +9,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/x509.h>
 #include <vector>
 
 namespace openssl {
@@ -70,12 +71,17 @@ inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, const ch
     return result;
 }
 
-inline void create_pfx_file(const char* fileName, EVP_PKEY* pkey, X509* cert, const char* name, const char* password = nullptr) {
-    auto pkcs = PKCS12_create(password, name, pkey, cert, nullptr, 0, 0, 0, 0, 0);
+inline void create_pfx_file(const char* fileName, EVP_PKEY* pkey, X509* cert, X509* ca, const char* name, const char* password = nullptr) {
+    auto castack = sk_X509_new_null();
+    if(ca != nullptr) {
+        sk_X509_push(castack, ca);
+    }
+    auto pkcs = PKCS12_create(password, name, pkey, cert, castack, 0, 0, 0, 0, 0);
     auto file = fopen(fileName, "wb");
     i2d_PKCS12_fp(file, pkcs);
     fclose(file);
     PKCS12_free(pkcs);
+    sk_X509_free(castack);
 }
 
 };
