@@ -7,6 +7,7 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
+#include <openssl/obj_mac.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
@@ -59,8 +60,12 @@ inline EVP_PKEY* get_private_key(std::vector<uint8_t>& privateKey) {
     return pkey;
 }
 
-inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, const char* name, const char* password = nullptr) {
-    auto pkcs = PKCS12_create(password, name, pkey, cert, nullptr, 0, 0, PKCS12_DEFAULT_ITER, 0, 0);
+inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, X509* ca, const char* name, const char* password = nullptr) {
+    auto castack = sk_X509_new_null();
+    if(ca != nullptr) {
+        sk_X509_push(castack, ca);
+    }
+    auto pkcs = PKCS12_create(password, name, pkey, cert, castack, NID_id_Gost28147_89, NID_id_Gost28147_89, 0, NID_gost_mac_12, 0);
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(i2d_PKCS12_bio(bio, pkcs));
     uint8_t* data;
@@ -68,6 +73,7 @@ inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, const ch
     auto result = std::vector<uint8_t>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     PKCS12_free(pkcs);
+    sk_X509_free(castack);
     return result;
 }
 
@@ -76,7 +82,7 @@ inline void create_pfx_file(const char* fileName, EVP_PKEY* pkey, X509* cert, X5
     if(ca != nullptr) {
         sk_X509_push(castack, ca);
     }
-    auto pkcs = PKCS12_create(password, name, pkey, cert, castack, 0, 0, 0, 0, 0);
+    auto pkcs = PKCS12_create(password, name, pkey, cert, castack, NID_id_Gost28147_89, NID_id_Gost28147_89, 0, NID_gost_mac_12, 0);
     auto file = fopen(fileName, "wb");
     i2d_PKCS12_fp(file, pkcs);
     fclose(file);
