@@ -1,11 +1,11 @@
 #ifndef _CASERV_OPENSSL_PROVIDER_H_
 #define _CASERV_OPENSSL_PROVIDER_H_
 
-#include <algorithm>
 #include <cstdint>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <map>
 #include <memory>
-#include <new>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -22,11 +22,12 @@
 #include <utility>
 #include <vector>
 
+#include "./../contracts/certificate_request.h"
+
 #include "db.h"
 #include "defines.h"
 #include "error_text.h"
 
-#include "./../contracts/certificate_request.h"
 
 namespace openssl {
 using namespace contracts;
@@ -55,7 +56,7 @@ static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
       .digest = NID_id_GostR3411_2012_512}}};
 
 // use basic params for CA root cert
-static std::map<int, const char *> CaExtensions{
+static std::map<int, std::string> CaExtensions{
     {NID_subject_key_identifier, "hash"},
     //{NID_authority_key_identifier, "keyid:always"},
     {NID_basic_constraints, "CA:TRUE,pathlen:0"},
@@ -63,7 +64,7 @@ static std::map<int, const char *> CaExtensions{
     {NID_certificate_policies,
      "1.2.643.100.113.1,1.2.643.100.113.2,anyPolicy"}};
 
-static std::map<int, const char *> ClientExtensions{
+static std::map<int, std::string> ClientExtensions{
     {NID_subject_key_identifier, "hash"},
     {NID_authority_key_identifier, "keyid,issuer"},
     // {NID_basic_constraints, "critical"},
@@ -75,7 +76,8 @@ static std::map<int, const char *> ClientExtensions{
                         "1.2.643.3.88.1.1.1.7,"
                         "1.2.643.3.88.1.1.1.9,"
                         "1.2.643.3.88.1.1.1.10,"
-                        "1.2.643.3.88.1.1.1.11"}};
+                        "1.2.643.3.88.1.1.1.11"},
+    {NID_issuing_distribution_point, "URI:http://testis.ru"}};
 
 class Provider {
 public:
@@ -88,8 +90,11 @@ public:
       EVP_PKEY *issuerKey, int issuer_md) {
     try {
       auto subject = Build(req);
+      std::vector<std::string> crlDistributionPoints{
+          "https://test.ru/test.crl"};
       return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       issuer, issuerKey);
+                                       crlDistributionPoints, issuer,
+                                       issuerKey);
     } catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
     }
@@ -99,7 +104,9 @@ public:
   GenerateCa(const contracts::JuridicalPersonCertificateRequest &req) {
     try {
       auto subject = Build(req);
-      return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays);
+      std::vector<std::string> crlDistributionPoints;
+      return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
+                                       crlDistributionPoints);
     } catch (...) {
       throw std::runtime_error("GenerateCa failed.");
     }
@@ -131,11 +138,11 @@ private:
     }
   }
 
-  std::pair<X509Uptr, EvpPkeyUPtr>
-  GenerateX509Certitificate(const AlgorithmEnum &algorithm,
-                            const ParamsSet &subject, const uint16_t ttlInDays,
-                            X509 *issuer = nullptr,
-                            EVP_PKEY *issuerKp = nullptr) {
+  std::pair<X509Uptr, EvpPkeyUPtr> GenerateX509Certitificate(
+      const AlgorithmEnum &algorithm, const ParamsSet &subject,
+      const uint16_t ttlInDays,
+      const std::vector<std::string> &crlDistributionPoints,
+      X509 *issuer = nullptr, EVP_PKEY *issuerKp = nullptr) {
     try {
       auto pkeyParamsIt = PkeyOptions.find(algorithm);
       if (pkeyParamsIt == PkeyOptions.end()) {
@@ -179,8 +186,6 @@ private:
       auto issuerName = X509_get_subject_name(issuer);
       OSSL_CHECK(X509_set_issuer_name(cert, issuerName));
 
-      auto extensions = issuer == cert ? CaExtensions : ClientExtensions;
-
       // Init context
       X509V3_CTX ctx;
       // setup context
@@ -197,9 +202,16 @@ private:
       ctx.db_meth = &conf;
 
       // setup extensions
+      auto extensions = issuer == cert
+                            ? std::map<int, std::string>(CaExtensions)
+                            : std::map<int, std::string>(ClientExtensions);
+      if (!crlDistributionPoints.empty()) {
+        extensions.insert({NID_crl_distribution_points, fmt::format("URI:{}", fmt::join(crlDistributionPoints, ","))});
+      }
+
       for (auto extIt : extensions) {
         auto ext =
-            X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second);
+            X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second.c_str());
         if (ext != nullptr) {
           OSSL_CHECK(X509_add_ext(cert, ext, -1));
           X509_EXTENSION_free(ext);
@@ -220,7 +232,7 @@ private:
         md_nid = NID_id_GostR3411_2012_512;
         break;
       }
-      const EVP_MD *md = EVP_get_digestbynid(md_nid); 
+      const EVP_MD *md = EVP_get_digestbynid(md_nid);
       OSSL_CHECK(X509_sign(cert, issuerKp, md));
 
       return std::make_pair(std::move(X509Uptr(cert, ::X509_free)),
