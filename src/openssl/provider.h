@@ -77,7 +77,7 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.9,"
                         "1.2.643.3.88.1.1.1.10,"
                         "1.2.643.3.88.1.1.1.11"},
-    {NID_issuing_distribution_point, "URI:http://testis.ru"}};
+    /*{NID_issuing_distribution_point, "URI:http://testis.ru"}*/};
 
 class Provider {
 public:
@@ -87,7 +87,7 @@ public:
 
   std::pair<X509Uptr, EvpPkeyUPtr> GenerateClientCertitificate(
       const contracts::JuridicalPersonCertificateRequest &req, X509 *issuer,
-      EVP_PKEY *issuerKey, int issuer_md) {
+      EVP_PKEY *issuerKey) {
     try {
       auto subject = Build(req);
       std::vector<std::string> crlDistributionPoints{
@@ -157,7 +157,6 @@ private:
       auto cert = X509_new();
 
       // set serial number
-      // ASN1_INTEGER_set(X509_get_serialNumber(cert), 1);
       ASN1_STRING *serialNumber = X509_get_serialNumber(cert);
       std::vector<uint8_t> serial(SERIAL_LEN);
       OSSL_CHECK(RAND_bytes(serial.data(), SERIAL_LEN));

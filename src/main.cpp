@@ -37,6 +37,9 @@ void print(const std::pair<openssl::X509Uptr, openssl::EvpPkeyUPtr>& data) {
   }
 }
 
+contracts::JuridicalPersonCertificateRequest caReq;
+contracts::JuridicalPersonCertificateRequest clientReq;
+
 int main() {
 
   try {
@@ -45,32 +48,39 @@ int main() {
     spdlog::set_level(spdlog::level::level_enum::debug);
     openssl::Provider provider{nullptr};
 
-    contracts::JuridicalPersonCertificateRequest req;
-    req.commonName = "Иванов Иван Иванович";
-    req.country = "RU";
-    req.stateOrProvinceName = "78 г.Санкт-Петербург";
-    req.localityName = "Санкт-Петербург";
-    req.streetAddress = "ул. Большая Морская";
-    req.emailAddress = "test@testemail.ru";
-    req.KeyUsage = {contracts::KeyUsageEnum::Critical,
-                    contracts::KeyUsageEnum::DigitalSignature};
-    req.ExtendedKeyUsage = {contracts::ExtendedKeyUsageEnum::Critical,
-                            contracts::ExtendedKeyUsageEnum::ClientAuth,
-                            contracts::ExtendedKeyUsageEnum::EmailProtection};
+    contracts::JuridicalPersonCertificateRequest caReq;
+    caReq.commonName = "ООО Очень Тестовый УЦ";
+    caReq.country = "RU";
+    caReq.stateOrProvinceName = "78 г.Санкт-Петербург";
+    caReq.localityName = "Санкт-Петербург";
+    caReq.streetAddress = "ул. Большая Морская";
+    caReq.emailAddress = "test@testemail.ru";
+    caReq.innLe = "1234567890";
+    caReq.ogrn = "1234567890123";
+    caReq.organizationName = "ООО Очень Тестовый УЦ";
+    caReq.organizationUnitName = "Отдел фейковых выдач";
+    caReq.algorithm = contracts::AlgorithmEnum::GostR3410_2012_512;
 
-    req.inn = "123456789012";
-    req.givenName = "Иван Иванович";
-    req.surname = "Иванов";
-    req.snils = "12334536322";
+    contracts::JuridicalPersonCertificateRequest clientReq;
+    clientReq.commonName = "ООО Рога и Копыта";
+    clientReq.country = "RU";
+    clientReq.stateOrProvinceName = "78 г.Санкт-Петербург";
+    clientReq.localityName = "Санкт-Петербург";
+    clientReq.streetAddress = "ул. Пушкина";
+    clientReq.emailAddress = "test@testemail.ru";
+    clientReq.inn = "123456789012";
+    clientReq.givenName = "Иван Иванович";
+    clientReq.surname = "Иванов";
+    clientReq.snils = "12334536322";
+    clientReq.innLe = "2234467890";
+    caReq.ogrn = "2224567890123";
+    clientReq.organizationName = "ООО Рога и Копыта";
+    clientReq.organizationUnitName = "Директорат";
+    clientReq.title = "Предводитель";
+    clientReq.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
 
-    req.innLe = "1234567890";
-    req.organizationName = "ООО Рога и Копыта";
-    req.organizationUnitName = "Директорат";
-    req.title = "Предводитель";
-    req.algorithm = contracts::AlgorithmEnum::GostR3410_2012_512;
 
-
-    auto rootCert = provider.GenerateCa(req);
+    auto rootCert = provider.GenerateCa(caReq);
     //print(rootCert);
 
     auto rootPkData = openssl::get_private_key_data(rootCert.second.get());
@@ -78,10 +88,9 @@ int main() {
     auto issuerKey = openssl::get_private_key(rootPkData);
     auto issuerCert = openssl::get_certificate(rootCertData);
 
-    req.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
-    auto client = provider.GenerateClientCertitificate(req, issuerCert, issuerKey, 0);
+    auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
     print(client);
-    //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), issuerCert, "test", "1234");
+    //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), issuerCert, nullptr, "1234");
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

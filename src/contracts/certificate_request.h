@@ -16,8 +16,6 @@ namespace contracts {
         std::string stateOrProvinceName;
         std::string streetAddress;
         std::string emailAddress;
-        std::vector<KeyUsageEnum> KeyUsage;
-        std::vector<ExtendedKeyUsageEnum> ExtendedKeyUsage;
         uint16_t ttlInDays{365};
     };
 
