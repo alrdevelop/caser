@@ -1,6 +1,7 @@
 #ifndef _CASERV_OPENSSL_PROVIDER_H_
 #define _CASERV_OPENSSL_PROVIDER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -27,7 +28,6 @@
 #include "db.h"
 #include "defines.h"
 #include "error_text.h"
-
 
 namespace openssl {
 using namespace contracts;
@@ -92,9 +92,11 @@ public:
       auto subject = Build(req);
       std::vector<std::string> crlDistributionPoints{
           "https://test.ru/test.crl"};
+      std::vector<std::string> ocspEndPoints{"https://test.ru/test.ocsp"};
+      std::vector<std::string> caEndPoints{"https://test.ru/test.crt"};
       return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       crlDistributionPoints, issuer,
-                                       issuerKey);
+                                       crlDistributionPoints, ocspEndPoints,
+                                       caEndPoints, issuer, issuerKey);
     } catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
     }
@@ -105,8 +107,11 @@ public:
     try {
       auto subject = Build(req);
       std::vector<std::string> crlDistributionPoints;
+      std::vector<std::string> ocspEndPoints;
+      std::vector<std::string> caEndPoints;
       return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       crlDistributionPoints);
+                                       crlDistributionPoints, ocspEndPoints,
+                                       caEndPoints);
     } catch (...) {
       throw std::runtime_error("GenerateCa failed.");
     }
@@ -142,7 +147,9 @@ private:
       const AlgorithmEnum &algorithm, const ParamsSet &subject,
       const uint16_t ttlInDays,
       const std::vector<std::string> &crlDistributionPoints,
-      X509 *issuer = nullptr, EVP_PKEY *issuerKp = nullptr) {
+      std::vector<std::string> &ocspEndPoints,
+      std::vector<std::string> &caEndPoints, X509 *issuer = nullptr,
+      EVP_PKEY *issuerKp = nullptr) {
     try {
       auto pkeyParamsIt = PkeyOptions.find(algorithm);
       if (pkeyParamsIt == PkeyOptions.end()) {
@@ -205,12 +212,26 @@ private:
                             ? std::map<int, std::string>(CaExtensions)
                             : std::map<int, std::string>(ClientExtensions);
       if (!crlDistributionPoints.empty()) {
-        extensions.insert({NID_crl_distribution_points, fmt::format("URI:{}", fmt::join(crlDistributionPoints, ","))});
+        extensions.insert(
+            {NID_crl_distribution_points,
+             fmt::format("URI:{}", fmt::join(crlDistributionPoints, ","))});
+      }
+
+      // fill info access
+      std::vector<std::string> info {2};
+      if (!caEndPoints.empty()) {
+        info[0] = fmt::format("caIssuers;URI:{}", fmt::join(caEndPoints, ","));
+      }
+      if (!ocspEndPoints.empty()) {
+        info[1] = fmt::format("OCSP;URI:{}", fmt::join(ocspEndPoints, ","));
+      }
+      if(!caEndPoints.empty() || !ocspEndPoints.empty()) {
+        extensions.insert({NID_info_access, fmt::format("{}",fmt::join(info, ","))});
       }
 
       for (auto extIt : extensions) {
-        auto ext =
-            X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second.c_str());
+        auto ext = X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first,
+                                       extIt.second.c_str());
         if (ext != nullptr) {
           OSSL_CHECK(X509_add_ext(cert, ext, -1));
           X509_EXTENSION_free(ext);
@@ -220,6 +241,11 @@ private:
                       extIt.first, extIt.second, openssl::get_errors_string());
         }
       }
+
+      // fill info access
+      //  AUTHORITY_INFO_ACCESS* info = X509_get_ext_d2i(cert, NID_info_access,
+      //  nullptr, nullptr);
+
       // sign cert
       auto pkey_nid = EVP_PKEY_base_id(issuerKp);
       auto md_nid = NID_undef;
