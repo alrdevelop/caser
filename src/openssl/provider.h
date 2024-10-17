@@ -49,6 +49,15 @@ struct PkeyParams {
   int digest;
 };
 
+enum REVINFO_TYPE {
+    REV_VALID             = -1, /* Valid (not-revoked) status */
+    REV_NONE              = 0, /* No additional information */
+    REV_CRL_REASON        = 1, /* Value is CRL reason code */
+    REV_HOLD              = 2, /* Value is hold instruction */
+    REV_KEY_COMPROMISE    = 3, /* Value is cert key compromise time */
+    REV_CA_COMPROMISE     = 4  /* Value is CA key compromise time */
+};
+
 static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
     {contracts::AlgorithmEnum::GostR3410_2012_256,
      {.keytype = NID_id_GostR3410_2012_256,
@@ -131,32 +140,28 @@ public:
     ASN1_UTCTIME_adj(asn1Tm, now, 0, 0);
 
     auto crl = X509_CRL_new();
-    auto info = X509_CRL_INFO_new();
     OSSL_CHECK(X509_CRL_set_version(crl, X509_CRL_VERSION_2));
-    auto meth = X509_CRL_get_meth_data(crl);
-
     OSSL_CHECK(X509_CRL_set_issuer_name(crl, X509_get_subject_name(issuerCert)));
     OSSL_CHECK(X509_CRL_set_lastUpdate(crl, asn1Tm));
-    ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
+    // ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
     OSSL_CHECK(X509_CRL_set_nextUpdate(crl, asn1Tm));
 
-    for (auto cert : certs) {
-      auto revoked = X509_REVOKED_new();
-      auto serial = X509_get_serialNumber(cert);
-      OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
-      OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
-      OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+    // for (auto cert : certs) {
+    //   auto revoked = X509_REVOKED_new();
+    //   auto serial = X509_get_serialNumber(cert);
+    //   OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
+    //   OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
+    //   OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
 
-      auto rtmp = ASN1_ENUMERATED_new();
-      ASN1_ENUMERATED_set(rtmp, 4);
-      OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
-      ASN1_ENUMERATED_free(rtmp);
+    //   auto rtmp = ASN1_ENUMERATED_new();
+    //   ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
+    //   OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+    //   ASN1_ENUMERATED_free(rtmp);
       
-      ASN1_INTEGER_free(serial);
-      X509_REVOKED_free(revoked);
-    }
+    //   ASN1_INTEGER_free(serial);
+    //   X509_REVOKED_free(revoked);
+    // }
     OSSL_CHECK(X509_CRL_sort(crl));
-
     // Init context
     X509V3_CTX ctx;
     // setup context
