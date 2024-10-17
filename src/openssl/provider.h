@@ -1,14 +1,18 @@
 #ifndef _CASERV_OPENSSL_PROVIDER_H_
 #define _CASERV_OPENSSL_PROVIDER_H_
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <map>
 #include <memory>
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
@@ -79,6 +83,10 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.11"},
     /*{NID_issuing_distribution_point, "URI:http://testis.ru"}*/};
 
+static std::map<int, std::string> CrlExtensions{
+    {NID_authority_key_identifier, "keyid,issuer"},
+    {NID_crl_number, "1"}
+};
 class Provider {
 public:
   Provider(ENGINE *engine) : _engine(engine) {}
@@ -115,6 +123,73 @@ public:
     } catch (...) {
       throw std::runtime_error("GenerateCa failed.");
     }
+  }
+
+  X509CrlUptr CreateCRL(X509 *issuerCert, EVP_PKEY* issuerKp, const std::vector<X509 *> certs) {
+    auto *asn1Tm = ASN1_UTCTIME_new();
+    time_t now = time(0);
+    ASN1_UTCTIME_adj(asn1Tm, now, 0, 0);
+
+    auto crl = X509_CRL_new();
+    auto info = X509_CRL_INFO_new();
+    OSSL_CHECK(X509_CRL_set_version(crl, X509_CRL_VERSION_2));
+    auto meth = X509_CRL_get_meth_data(crl);
+
+    OSSL_CHECK(X509_CRL_set_issuer_name(crl, X509_get_subject_name(issuerCert)));
+    OSSL_CHECK(X509_CRL_set_lastUpdate(crl, asn1Tm));
+    ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
+    OSSL_CHECK(X509_CRL_set_nextUpdate(crl, asn1Tm));
+
+    for (auto cert : certs) {
+      auto revoked = X509_REVOKED_new();
+      auto serial = X509_get_serialNumber(cert);
+      OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
+      OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
+      OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+
+      auto rtmp = ASN1_ENUMERATED_new();
+      ASN1_ENUMERATED_set(rtmp, 4);
+      OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+      ASN1_ENUMERATED_free(rtmp);
+      
+      ASN1_INTEGER_free(serial);
+      X509_REVOKED_free(revoked);
+    }
+    OSSL_CHECK(X509_CRL_sort(crl));
+
+    // Init context
+    X509V3_CTX ctx;
+    // setup context
+    X509V3_set_ctx(&ctx, issuerCert, nullptr, nullptr, crl, 0);
+
+    // setup db and db_meth, we need it for certificate policies
+    X509V3_CONF_METHOD conf;
+    openssl::Database db;
+    conf.get_string = openssl::db_get_string;
+    conf.get_section = openssl::db_get_section;
+    conf.free_string = openssl::db_free_string;
+    conf.free_section = openssl::db_free_section;
+    ctx.db = &db;
+    ctx.db_meth = &conf;
+
+    for(auto extIt : CrlExtensions) {
+        auto ext = X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first,
+                                       extIt.second.c_str());
+        if(ext != nullptr) {
+          OSSL_CHECK(X509_CRL_add_ext(crl, ext, -1));
+        }
+    }
+
+    auto crlNumber = ASN1_INTEGER_new();
+    ASN1_INTEGER_set(crlNumber, 1);
+    OSSL_CHECK(X509_CRL_add1_ext_i2d(crl, NID_crl_number, crlNumber, 0, 0));
+    ASN1_INTEGER_free(crlNumber);
+
+    const EVP_MD *md = EVP_get_digestbynid(GetMDId(issuerKp));
+    OSSL_CHECK(X509_CRL_sign(crl, issuerKp, md));
+
+    ASN1_UTCTIME_free(asn1Tm);
+    return std::move(X509CrlUptr(crl, ::X509_CRL_free));
   }
 
 private:
@@ -218,15 +293,16 @@ private:
       }
 
       // fill info access
-      std::vector<std::string> info {2};
+      std::vector<std::string> info{2};
       if (!caEndPoints.empty()) {
         info[0] = fmt::format("caIssuers;URI:{}", fmt::join(caEndPoints, ","));
       }
       if (!ocspEndPoints.empty()) {
         info[1] = fmt::format("OCSP;URI:{}", fmt::join(ocspEndPoints, ","));
       }
-      if(!caEndPoints.empty() || !ocspEndPoints.empty()) {
-        extensions.insert({NID_info_access, fmt::format("{}",fmt::join(info, ","))});
+      if (!caEndPoints.empty() || !ocspEndPoints.empty()) {
+        extensions.insert(
+            {NID_info_access, fmt::format("{}", fmt::join(info, ","))});
       }
 
       for (auto extIt : extensions) {
@@ -247,17 +323,7 @@ private:
       //  nullptr, nullptr);
 
       // sign cert
-      auto pkey_nid = EVP_PKEY_base_id(issuerKp);
-      auto md_nid = NID_undef;
-      switch (pkey_nid) {
-      case NID_id_GostR3410_2012_256:
-        md_nid = NID_id_GostR3411_2012_256;
-        break;
-      case NID_id_GostR3410_2012_512:
-        md_nid = NID_id_GostR3411_2012_512;
-        break;
-      }
-      const EVP_MD *md = EVP_get_digestbynid(md_nid);
+      const EVP_MD *md = EVP_get_digestbynid(GetMDId(issuerKp));
       OSSL_CHECK(X509_sign(cert, issuerKp, md));
 
       return std::make_pair(std::move(X509Uptr(cert, ::X509_free)),
@@ -268,7 +334,19 @@ private:
     }
   }
 
-  X509CrlUptr CreateCRL() {}
+  inline int GetMDId(EVP_PKEY *pkey) {
+    auto pkey_nid = EVP_PKEY_base_id(pkey);
+    auto md_nid = NID_undef;
+    switch (pkey_nid) {
+    case NID_id_GostR3410_2012_256:
+      return NID_id_GostR3411_2012_256;
+      break;
+    case NID_id_GostR3410_2012_512:
+      return NID_id_GostR3411_2012_512;
+      break;
+    }
+    return md_nid;
+  }
 
   inline ParamsSet Build(const CertificateRequestBase &req) {
     return ParamsSet{

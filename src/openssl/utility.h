@@ -60,6 +60,17 @@ inline EVP_PKEY* get_private_key(std::vector<uint8_t>& privateKey) {
     return pkey;
 }
 
+inline std::vector<std::uint8_t> get_crl_data(X509_CRL* crl) {
+    auto bio = BIO_new(BIO_s_mem());
+    OSSL_CHECK(PEM_write_bio_X509_CRL(bio, crl));
+    uint8_t* data;
+    auto len = BIO_get_mem_data(bio, &data);
+    auto result = std::vector<uint8_t>(data, data + len);
+    OSSL_CHECK(BIO_free(bio));
+    return result;
+
+}
+
 inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, X509* ca, const char* name, const char* password = nullptr) {
     auto castack = sk_X509_new_null();
     if(ca != nullptr) {

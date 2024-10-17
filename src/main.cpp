@@ -90,6 +90,11 @@ int main() {
 
     auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
     print(client);
+    auto crl = provider.CreateCRL(issuerCert, issuerKey, std::vector<X509*>{client.first.get()});
+    for(auto it : openssl::get_crl_data(crl.get())){
+      cout << it;
+    }
+    cout << "1";
     //openssl::create_pfx_file("export.pfx", client.second.get(), client.first.get(), issuerCert, nullptr, "1234");
 
   } catch (std::exception &ex) {
