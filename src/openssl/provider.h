@@ -146,21 +146,20 @@ public:
     // ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
     OSSL_CHECK(X509_CRL_set_nextUpdate(crl, asn1Tm));
 
-    // for (auto cert : certs) {
-    //   auto revoked = X509_REVOKED_new();
-    //   auto serial = X509_get_serialNumber(cert);
-    //   OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
-    //   OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
-    //   OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+    for (auto cert : certs) {
+      auto revoked = X509_REVOKED_new();
+      auto serial = X509_get_serialNumber(cert);
+      OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, X509_get_serialNumber(cert)));
+      OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
+      OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
 
-    //   auto rtmp = ASN1_ENUMERATED_new();
-    //   ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
-    //   OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
-    //   ASN1_ENUMERATED_free(rtmp);
+      auto rtmp = ASN1_ENUMERATED_new();
+      ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
+      OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+      ASN1_ENUMERATED_free(rtmp);
       
-    //   ASN1_INTEGER_free(serial);
-    //   X509_REVOKED_free(revoked);
-    // }
+      ASN1_INTEGER_free(serial);
+    }
     OSSL_CHECK(X509_CRL_sort(crl));
     // Init context
     X509V3_CTX ctx;
