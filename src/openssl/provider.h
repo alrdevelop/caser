@@ -89,8 +89,7 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.7,"
                         "1.2.643.3.88.1.1.1.9,"
                         "1.2.643.3.88.1.1.1.10,"
-                        "1.2.643.3.88.1.1.1.11"},
-    /*{NID_issuing_distribution_point, "URI:http://testis.ru"}*/};
+                        "1.2.643.3.88.1.1.1.11"}};
 
 static std::map<int, std::string> CrlExtensions{
     {NID_authority_key_identifier, "keyid,issuer"},
