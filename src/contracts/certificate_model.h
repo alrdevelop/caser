@@ -1,6 +1,7 @@
 #ifndef _CASERV_CONTRACTS_CERTIFICATE_H_
 #define _CASERV_CONTRACTS_CERTIFICATE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -16,7 +17,6 @@ namespace contracts {
         std::string_view caSerial;
         std::string_view commonName;
         std::string_view issueDate;
-        bool revoked;
         std::string_view revokeDate;
     };
 
@@ -25,8 +25,8 @@ namespace contracts {
         std::string_view thumbprint;
         std::string_view commonName;
         std::string_view issueDate;
-        std::vector<uint8_t> certificate;
-        std::vector<uint8_t> privateKey;
+        std::vector<std::byte> certificate;
+        std::vector<std::byte> privateKey;
         std::string_view publicUrl;
     };
     

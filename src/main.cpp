@@ -29,13 +29,13 @@ using namespace std;
 
 void print(const std::pair<openssl::X509Uptr, openssl::EvpPkeyUPtr>& data) {
   for(auto v : openssl::get_private_key_data(data.second.get())) {
-    cout << v;
+    cout << (unsigned char)v;
   }
   for(auto v : openssl::get_public_key_data(data.second.get())) {
-    cout << v;
+    cout << (unsigned char)v;
   }
   for(auto v : openssl::get_certificate_data(data.first.get())) {
-    cout << v;
+    cout << (unsigned char)v;
   }
 }
 
@@ -96,14 +96,23 @@ int main() {
 
     auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
     postrgre::PgDatabase db(connString);
-    db.GetCertificate("ddd");
+
     contracts::CertificateAuthorityModel caModel;
     caModel.commonName = caReq.commonName;
-    caModel.serial = "121";
+    caModel.serial = "1221";
+    caModel.thumbprint = "1";
     caModel.certificate = rootCertData;
     caModel.privateKey = rootPkData;
+    caModel.issueDate = "2024-12-12";
 
-    db.AddCA(caModel);
+    // db.AddCA(caModel);
+
+    for(auto ca : db.GetAllCa()) {
+      auto a = ca;
+      for(auto c : a->certificate) {
+        cout << (unsigned char)c;
+      }
+    }
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

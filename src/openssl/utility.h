@@ -2,6 +2,7 @@
 #define _CASERV_OPENSSL_UTILITY_H_
 
 #include "defines.h"
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <openssl/bio.h>
@@ -15,17 +16,17 @@
 
 namespace openssl {
 
-inline std::vector<std::uint8_t> get_certificate_data(X509* cert) {
+inline std::vector<std::byte> get_certificate_data(X509* cert) {
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(PEM_write_bio_X509(bio, cert));
-    uint8_t* data;
+    std::byte* data;
     auto len = BIO_get_mem_data(bio, &data);
-    auto result = std::vector<uint8_t>(data, data + len);
+    auto result = std::vector<std::byte>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     return result;
 }
 
-inline X509* get_certificate(const std::vector<uint8_t>& data) {
+inline X509* get_certificate(const std::vector<std::byte>& data) {
     auto bio = BIO_new_mem_buf(data.data(), data.size());
     auto result = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
     OSSL_CHECK(BIO_free(bio));
@@ -33,45 +34,45 @@ inline X509* get_certificate(const std::vector<uint8_t>& data) {
 }
 
 
-inline std::vector<std::uint8_t> get_private_key_data(EVP_PKEY* pkey){
+inline std::vector<std::byte> get_private_key_data(EVP_PKEY* pkey){
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(PEM_write_bio_PrivateKey(bio, pkey, nullptr, nullptr, 0, 0, nullptr));
-    uint8_t* data;
+    std::byte* data;
     auto len = BIO_get_mem_data(bio, &data);
-    auto result = std::vector<uint8_t>(data, data + len);
+    auto result = std::vector<std::byte>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     return result;
 }
 
-inline std::vector<std::uint8_t> get_public_key_data(EVP_PKEY* pkey){
+inline std::vector<std::byte> get_public_key_data(EVP_PKEY* pkey){
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(PEM_write_bio_PUBKEY(bio, pkey));
-    uint8_t* data;
+    std::byte* data;
     auto len = BIO_get_mem_data(bio, &data);
-    auto result = std::vector<uint8_t>(data, data + len);
+    auto result = std::vector<std::byte>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     return result;
 }
 
-inline EVP_PKEY* get_private_key(std::vector<uint8_t>& privateKey) {
+inline EVP_PKEY* get_private_key(std::vector<std::byte>& privateKey) {
     auto skbio = BIO_new_mem_buf(privateKey.data(), privateKey.size());
     EVP_PKEY* pkey = PEM_read_bio_PrivateKey(skbio, nullptr, nullptr, nullptr);
     OSSL_CHECK(BIO_free(skbio));
     return pkey;
 }
 
-inline std::vector<std::uint8_t> get_crl_data(X509_CRL* crl) {
+inline std::vector<std::byte> get_crl_data(X509_CRL* crl) {
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(PEM_write_bio_X509_CRL(bio, crl));
-    uint8_t* data;
+    std::byte* data;
     auto len = BIO_get_mem_data(bio, &data);
-    auto result = std::vector<uint8_t>(data, data + len);
+    auto result = std::vector<std::byte>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     return result;
 
 }
 
-inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, X509* ca, const char* name, const char* password = nullptr) {
+inline std::vector<std::byte> create_pfx(EVP_PKEY* pkey, X509* cert, X509* ca, const char* name, const char* password = nullptr) {
     auto castack = sk_X509_new_null();
     if(ca != nullptr) {
         sk_X509_push(castack, ca);
@@ -79,9 +80,9 @@ inline std::vector<std::uint8_t> create_pfx(EVP_PKEY* pkey, X509* cert, X509* ca
     auto pkcs = PKCS12_create(password, name, pkey, cert, castack, NID_id_Gost28147_89, NID_id_Gost28147_89, 0, NID_gost_mac_12, 0);
     auto bio = BIO_new(BIO_s_mem());
     OSSL_CHECK(i2d_PKCS12_bio(bio, pkcs));
-    uint8_t* data;
+    std::byte* data;
     auto len = BIO_get_mem_data(bio, &data);
-    auto result = std::vector<uint8_t>(data, data + len);
+    auto result = std::vector<std::byte>(data, data + len);
     OSSL_CHECK(BIO_free(bio));
     PKCS12_free(pkcs);
     sk_X509_free(castack);
