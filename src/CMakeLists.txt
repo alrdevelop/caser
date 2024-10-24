@@ -18,12 +18,10 @@ find_package(spdlog REQUIRED)
 # Add source to this project's executable.
 add_executable (caserver 
 	"main.cpp" 
-  "common/logger.h"
-  "common/string.h"
-  "openssl/defines.h"
+  "postgre/pgdatabase.cpp"
 )
 
-target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only httpserver pqxx pq)
+target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET caserver PROPERTY CXX_STANDARD 20)

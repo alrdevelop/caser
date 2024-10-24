@@ -4,16 +4,17 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <string_view>
 
 class AppSettings {
 public:
   AppSettings() = default;
   ~AppSettings() = default;
 
-  std::string GetParam(const std::string &name,
+  std::string_view GetParam(const std::string &name,
                        const std::string &defaultValue) const {
     if (const char *envp = std::getenv(name.c_str()))
-      return std::string(envp);
+      return std::string_view(envp);
     return defaultValue;
   }
 };

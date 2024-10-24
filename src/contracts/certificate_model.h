@@ -23,7 +23,9 @@ namespace contracts {
     struct CertificateAuthorityModel {
         std::string_view serial;
         std::string_view thumbprint;
-        std::vector<uint8_t> data;
+        std::string_view commonName;
+        std::string_view issueDate;
+        std::vector<uint8_t> certificate;
         std::vector<uint8_t> privateKey;
         std::string_view publicUrl;
     };

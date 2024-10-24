@@ -5,18 +5,21 @@ CREATE SCHEMA public AUTHORIZATION "admin";
 COMMENT ON SCHEMA public IS 'standard public schema';
 -- public.ca определение
 
--- Drop table
+-- Drop tables
+DROP TABLE public.certificates;
+DROP TABLE public.ca;
 
--- DROP TABLE public.ca;
+
 
 CREATE TABLE public.ca (
-	serial varchar(250) NOT NULL,
-	thumbprint varchar(250) NOT NULL,
-	certificate bytea NULL,
-	privatekey bytea NULL,
-	publicurl varchar(500) NOT NULL,
-	CONSTRAINT ca_serial_pk PRIMARY KEY (serial),
-	CONSTRAINT ca_unique_thumbprint UNIQUE (thumbprint)
+	"serial" varchar(250) NOT NULL,
+	"thumbprint" varchar(250) NOT NULL,
+	"commonName" varchar(500) NOT NULL,
+	"certificate" bytea NOT NULL,
+	"privateKey" bytea NOT NULL,
+	"publicUrl" varchar(500) NOT NULL,
+	CONSTRAINT ca_serial_pk PRIMARY KEY ("serial"),
+	CONSTRAINT ca_unique_thumbprint UNIQUE ("thumbprint")
 );
 
 -- Permissions
@@ -27,17 +30,18 @@ GRANT ALL ON TABLE public.ca TO "admin";
 
 -- public.certificates определение
 
--- Drop table
-
--- DROP TABLE public.certificates;
 
 CREATE TABLE public.certificates (
-	serial varchar(250) NOT NULL,
-	thumbprint varchar(250) NOT NULL,
-	caserial varchar(250) NOT NULL,
-	CONSTRAINT certificates_pk PRIMARY KEY (serial),
-	CONSTRAINT certificates_unique_thumbprint UNIQUE (thumbprint),
-	CONSTRAINT certificates_ca_fk FOREIGN KEY (serial) REFERENCES public.ca(serial)
+	"serial" varchar(250) NOT NULL,
+	"thumbprint" varchar(250) NOT NULL,
+	"caSerial" varchar(250) NOT NULL,
+	"commonName" varchar(500) NOT NULL,
+	"issueDate" timestamp with time zone NOT NULL,
+	"revoked" bool NOT NULL,
+	"revokeDate" timestamp with time zone NULL,
+	CONSTRAINT certificates_pk PRIMARY KEY ("serial"),
+	CONSTRAINT certificates_unique_thumbprint UNIQUE ("thumbprint"),
+	CONSTRAINT certificates_ca_fk FOREIGN KEY ("caSerial") REFERENCES public.ca("serial")
 );
 
 -- Permissions
