@@ -21,6 +21,7 @@
 #include <ostream>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -81,14 +82,22 @@ int main() {
     clientReq.title = "Предводитель";
     clientReq.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
 
+    std::vector<std::string_view> crlDistributionPoints {
+      "http://test.ru/crl.crl"
+    };
 
-    auto rootCert = provider.GenerateCa(caReq);
-    // //print(rootCert);
+    std::vector<std::string_view> ocspEndPoints {
+    };
 
-    auto rootPkData = openssl::get_private_key_data(rootCert.second.get());
-    auto rootCertData = openssl::get_certificate_data(rootCert.first.get());
-    // auto issuerKey = openssl::get_private_key(rootPkData);
-    // auto issuerCert = openssl::get_certificate(rootCertData);
+    std::vector<std::string_view> caEndPoints {
+      "http://test.ru/root.crt"
+    };
+
+    auto root = provider.GenerateCa(caReq);
+    auto client = provider.GenerateClientCertitificate(clientReq, crlDistributionPoints, ocspEndPoints, caEndPoints, root.first, root.second);
+    for(auto it : client.first) {
+      cout << (unsigned char) it;
+    }
 
     // auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
     // print(client);
@@ -101,8 +110,8 @@ int main() {
     caModel.commonName = caReq.commonName;
     caModel.serial = "1221";
     caModel.thumbprint = "1";
-    caModel.certificate = rootCertData;
-    caModel.privateKey = rootPkData;
+    caModel.certificate = root.first;
+    caModel.privateKey = root.second;
     caModel.issueDate = "2024-12-12";
 
     // db.AddCA(caModel);

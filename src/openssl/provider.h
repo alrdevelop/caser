@@ -23,6 +23,7 @@
 #include <openssl/x509v3.h>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,6 +33,7 @@
 #include "db.h"
 #include "defines.h"
 #include "error_text.h"
+#include "utility.h"
 
 namespace openssl {
 using namespace contracts;
@@ -50,12 +52,12 @@ struct PkeyParams {
 };
 
 enum REVINFO_TYPE {
-    REV_VALID             = -1, /* Valid (not-revoked) status */
-    REV_NONE              = 0, /* No additional information */
-    REV_CRL_REASON        = 1, /* Value is CRL reason code */
-    REV_HOLD              = 2, /* Value is hold instruction */
-    REV_KEY_COMPROMISE    = 3, /* Value is cert key compromise time */
-    REV_CA_COMPROMISE     = 4  /* Value is CA key compromise time */
+  REV_VALID = -1,         /* Valid (not-revoked) status */
+  REV_NONE = 0,           /* No additional information */
+  REV_CRL_REASON = 1,     /* Value is CRL reason code */
+  REV_HOLD = 2,           /* Value is hold instruction */
+  REV_KEY_COMPROMISE = 3, /* Value is cert key compromise time */
+  REV_CA_COMPROMISE = 4   /* Value is CA key compromise time */
 };
 
 static std::unordered_map<contracts::AlgorithmEnum, PkeyParams> PkeyOptions{
@@ -92,55 +94,101 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.11"}};
 
 static std::map<int, std::string> CrlExtensions{
-    {NID_authority_key_identifier, "keyid,issuer"},
-    {NID_crl_number, "1"}
-};
+    {NID_authority_key_identifier, "keyid,issuer"}, {NID_crl_number, "1"}};
 class Provider {
 public:
   Provider(ENGINE *engine) : _engine(engine) {}
 
   ~Provider() = default;
 
-  std::pair<X509Uptr, EvpPkeyUPtr> GenerateClientCertitificate(
-      const contracts::JuridicalPersonCertificateRequest &req, X509 *issuer,
-      EVP_PKEY *issuerKey) {
+  std::pair<std::vector<std::byte>, std::vector<std::byte>>
+  GenerateClientCertitificate(
+      const contracts::JuridicalPersonCertificateRequest &req,
+      std::vector<std::string_view> crlDistributionPoints,
+      std::vector<std::string_view> ocspEndPoints,
+      std::vector<std::string_view> caEndPoints,
+      std::vector<std::byte> issuerCert, std::vector<std::byte> issuerKey) {
     try {
       auto subject = Build(req);
-      std::vector<std::string> crlDistributionPoints{
-          "https://test.ru/test.crl"};
-      std::vector<std::string> ocspEndPoints{"https://test.ru/test.ocsp"};
-      std::vector<std::string> caEndPoints{"https://test.ru/test.crt"};
-      return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       crlDistributionPoints, ocspEndPoints,
-                                       caEndPoints, issuer, issuerKey);
+      auto result = GenerateX509Certitificate(
+          req.algorithm, subject, req.ttlInDays, crlDistributionPoints,
+          ocspEndPoints, caEndPoints, openssl::get_certificate(issuerCert),
+          openssl::get_private_key(issuerKey));
+      return std::make_pair(openssl::get_certificate_data(result.first.get()),
+                            openssl::get_private_key_data(result.second.get()));
     } catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
     }
   }
 
-  std::pair<X509Uptr, EvpPkeyUPtr>
+  std::pair<std::vector<std::byte>, std::vector<std::byte>>
+  GenerateClientCertitificate(
+      const contracts::IndividualEntrepreneurCertificateRequest &req,
+      std::vector<std::string_view> crlDistributionPoints,
+      std::vector<std::string_view> ocspEndPoints,
+      std::vector<std::string_view> caEndPoints,
+      std::vector<std::byte> issuerCert, std::vector<std::byte> issuerKey) {
+    try {
+      auto subject = Build(req);
+      auto result = GenerateX509Certitificate(
+          req.algorithm, subject, req.ttlInDays, crlDistributionPoints,
+          ocspEndPoints, caEndPoints, openssl::get_certificate(issuerCert),
+          openssl::get_private_key(issuerKey));
+      return std::make_pair(openssl::get_certificate_data(result.first.get()),
+                            openssl::get_private_key_data(result.second.get()));
+    } catch (...) {
+      throw std::runtime_error("GenerateX509Certitificate failed.");
+    }
+  }
+
+  std::pair<std::vector<std::byte>, std::vector<std::byte>>
+  GenerateClientCertitificate(
+      const contracts::PhysicalPersonCertificateRequest &req,
+      std::vector<std::string_view> crlDistributionPoints,
+      std::vector<std::string_view> ocspEndPoints,
+      std::vector<std::string_view> caEndPoints,
+      std::vector<std::byte> issuerCert, std::vector<std::byte> issuerKey) {
+    try {
+      auto subject = Build(req);
+
+      auto result = GenerateX509Certitificate(
+          req.algorithm, subject, req.ttlInDays, crlDistributionPoints,
+          ocspEndPoints, caEndPoints, openssl::get_certificate(issuerCert),
+          openssl::get_private_key(issuerKey));
+      return std::make_pair(openssl::get_certificate_data(result.first.get()),
+                            openssl::get_private_key_data(result.second.get()));
+    } catch (...) {
+      throw std::runtime_error("GenerateX509Certitificate failed.");
+    }
+  }
+
+  std::pair<std::vector<std::byte>, std::vector<std::byte>>
   GenerateCa(const contracts::JuridicalPersonCertificateRequest &req) {
     try {
       auto subject = Build(req);
-      std::vector<std::string> crlDistributionPoints;
-      std::vector<std::string> ocspEndPoints;
-      std::vector<std::string> caEndPoints;
-      return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
-                                       crlDistributionPoints, ocspEndPoints,
-                                       caEndPoints);
+      std::vector<std::string_view> crlDistributionPoints;
+      std::vector<std::string_view> ocspEndPoints;
+      std::vector<std::string_view> caEndPoints;
+      auto result = GenerateX509Certitificate(
+          req.algorithm, subject, req.ttlInDays, crlDistributionPoints,
+          ocspEndPoints, caEndPoints);
+      return std::make_pair(openssl::get_certificate_data(result.first.get()),
+                            openssl::get_private_key_data(result.second.get()));
     } catch (...) {
       throw std::runtime_error("GenerateCa failed.");
     }
   }
 
-  X509CrlUptr CreateCRL(X509 *issuerCert, EVP_PKEY* issuerKp, const std::vector<X509 *> certs) {
+  X509CrlUptr CreateCRL(X509 *issuerCert, EVP_PKEY *issuerKp,
+                        const std::vector<X509 *> certs) {
     auto *asn1Tm = ASN1_UTCTIME_new();
     time_t now = time(0);
     ASN1_UTCTIME_adj(asn1Tm, now, 0, 0);
 
     auto crl = X509_CRL_new();
     OSSL_CHECK(X509_CRL_set_version(crl, X509_CRL_VERSION_2));
-    OSSL_CHECK(X509_CRL_set_issuer_name(crl, X509_get_subject_name(issuerCert)));
+    OSSL_CHECK(
+        X509_CRL_set_issuer_name(crl, X509_get_subject_name(issuerCert)));
     OSSL_CHECK(X509_CRL_set_lastUpdate(crl, asn1Tm));
     // ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
     OSSL_CHECK(X509_CRL_set_nextUpdate(crl, asn1Tm));
@@ -148,15 +196,17 @@ public:
     for (auto cert : certs) {
       auto revoked = X509_REVOKED_new();
       auto serial = X509_get_serialNumber(cert);
-      OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, X509_get_serialNumber(cert)));
+      OSSL_CHECK(
+          X509_REVOKED_set_serialNumber(revoked, X509_get_serialNumber(cert)));
       OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
       OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
 
       auto rtmp = ASN1_ENUMERATED_new();
       ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
-      OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+      OSSL_CHECK(
+          X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
       ASN1_ENUMERATED_free(rtmp);
-      
+
       ASN1_INTEGER_free(serial);
     }
     OSSL_CHECK(X509_CRL_sort(crl));
@@ -175,12 +225,12 @@ public:
     ctx.db = &db;
     ctx.db_meth = &conf;
 
-    for(auto extIt : CrlExtensions) {
-        auto ext = X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first,
-                                       extIt.second.c_str());
-        if(ext != nullptr) {
-          OSSL_CHECK(X509_CRL_add_ext(crl, ext, -1));
-        }
+    for (auto extIt : CrlExtensions) {
+      auto ext =
+          X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second.c_str());
+      if (ext != nullptr) {
+        OSSL_CHECK(X509_CRL_add_ext(crl, ext, -1));
+      }
     }
 
     auto crlNumber = ASN1_INTEGER_new();
@@ -224,9 +274,9 @@ private:
   std::pair<X509Uptr, EvpPkeyUPtr> GenerateX509Certitificate(
       const AlgorithmEnum &algorithm, const ParamsSet &subject,
       const uint16_t ttlInDays,
-      const std::vector<std::string> &crlDistributionPoints,
-      std::vector<std::string> &ocspEndPoints,
-      std::vector<std::string> &caEndPoints, X509 *issuer = nullptr,
+      const std::vector<std::string_view> &crlDistributionPoints,
+      const std::vector<std::string_view> &ocspEndPoints,
+      const std::vector<std::string_view> &caEndPoints, X509 *issuer = nullptr,
       EVP_PKEY *issuerKp = nullptr) {
     try {
       auto pkeyParamsIt = PkeyOptions.find(algorithm);
@@ -296,14 +346,14 @@ private:
       }
 
       // fill info access
-      std::vector<std::string> info{2};
+      std::vector<std::string> info;
       if (!caEndPoints.empty()) {
-        info[0] = fmt::format("caIssuers;URI:{}", fmt::join(caEndPoints, ","));
+        info.push_back(fmt::format("caIssuers;URI:{}", fmt::join(caEndPoints, ",")));
       }
       if (!ocspEndPoints.empty()) {
-        info[1] = fmt::format("OCSP;URI:{}", fmt::join(ocspEndPoints, ","));
+        info.push_back(fmt::format("OCSP;URI:{}", fmt::join(ocspEndPoints, ",")));
       }
-      if (!caEndPoints.empty() || !ocspEndPoints.empty()) {
+      if (!info.empty()) {
         extensions.insert(
             {NID_info_access, fmt::format("{}", fmt::join(info, ","))});
       }

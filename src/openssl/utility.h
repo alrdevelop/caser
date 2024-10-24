@@ -3,7 +3,6 @@
 
 #include "defines.h"
 #include <cstddef>
-#include <cstdint>
 #include <cstdio>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
