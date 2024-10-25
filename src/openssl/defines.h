@@ -2,6 +2,7 @@
 #define _CASERV_OPENSSL_DEFINES_H_
 
 #include "../common/logger.h"
+#include "./../base/errors.h"
 #include "error_text.h"
 
 #define OSSL_CHECK(x)                                                           \
@@ -11,7 +12,7 @@
         if(result <= 0)                                                         \
         {                                                                       \
             LOG_ERROR("OpenSSL call error: {}", openssl::get_errors_string());  \
-            throw std::runtime_error("OpenSSL call error.");                    \
+            throw base::errors::CryptoProviderError("OpenSSL call error.");     \
         }                                                                       \
     } while(0)                                                                  \
 

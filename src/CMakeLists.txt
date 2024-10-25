@@ -19,6 +19,7 @@ find_package(spdlog REQUIRED)
 add_executable (caserver 
 	"main.cpp" 
   "postgre/pgdatabase.cpp"
+  "openssl/crypto_provider.cpp"
 )
 
 target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq)

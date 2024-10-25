@@ -30,10 +30,10 @@
 
 #include "./../contracts/certificate_request.h"
 
-#include "db.h"
+#include "config_db.h"
 #include "defines.h"
 #include "error_text.h"
-#include "utility.h"
+#include "utils.h"
 
 namespace openssl {
 using namespace contracts;
@@ -41,7 +41,7 @@ using namespace contracts;
 using EvpPkeyUPtr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
 using X509Uptr = std::unique_ptr<X509, decltype(&::X509_free)>;
 using X509CrlUptr = std::unique_ptr<X509_CRL, decltype(&::X509_CRL_free)>;
-using ParamsSet = std::vector<std::pair<std::string, std::string>>;
+using ParamsSet = std::vector<std::pair<std::string_view, std::string_view>>;
 
 #define SERIAL_LEN 16 // 128 bit
 
@@ -217,7 +217,7 @@ public:
 
     // setup db and db_meth, we need it for certificate policies
     X509V3_CONF_METHOD conf;
-    openssl::Database db;
+    ConfigDatabase db;
     conf.get_string = openssl::db_get_string;
     conf.get_section = openssl::db_get_section;
     conf.free_string = openssl::db_free_string;
@@ -307,7 +307,7 @@ private:
       // Set certificate subject data
       X509_NAME *name = X509_get_subject_name(cert);
       for (auto subjPair : subject) {
-        NameAddEntry(name, subjPair.first.c_str(), subjPair.second);
+        NameAddEntry(name, subjPair.first.data(), subjPair.second.data());
       }
 
       // set public key
@@ -327,7 +327,7 @@ private:
 
       // setup db and db_meth, we need it for certificate policies
       X509V3_CONF_METHOD conf;
-      openssl::Database db;
+      ConfigDatabase db;
       conf.get_string = openssl::db_get_string;
       conf.get_section = openssl::db_get_section;
       conf.free_string = openssl::db_free_string;
@@ -382,7 +382,8 @@ private:
       return std::make_pair(std::move(X509Uptr(cert, ::X509_free)),
                             std::move(key));
 
-    } catch (...) {
+    }
+    catch (...) {
       throw std::runtime_error("GenerateX509Certitificate failed.");
     }
   }
@@ -441,11 +442,11 @@ private:
     Add subject entry
   */
   inline void NameAddEntry(X509_NAME *name, const char *field,
-                           const std::string &val, int type = MBSTRING_UTF8) {
-    if (val.empty())
+                           const char *val, int type = MBSTRING_UTF8) {
+    if (val == nullptr)
       return;
     OSSL_CHECK(X509_NAME_add_entry_by_txt(
-        name, field, type, (unsigned char *)val.c_str(), -1, -1, 0));
+        name, field, type, (unsigned char *)val, -1, -1, 0));
   }
 
 private:

@@ -2,7 +2,7 @@
 #define _CASERV_POSRGRE_PGDATABASE_H_
 
 #include "./../common/appsettings.h"
-#include "./../contracts/certificate_model.h"
+#include "./../base/idatabase.h"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -11,12 +11,11 @@
 #include <pqxx/connection>
 
 namespace postrgre {
+
 using namespace contracts;
 
-using CertificateModelPtr = std::shared_ptr<CertificateModel>;
-using CertificateAuthorityModelPtr = std::shared_ptr<CertificateAuthorityModel>;
 
-class PgDatabase {
+class PgDatabase : public base::IDataBase {
 public:
   PgDatabase(const std::string_view& connectionString);
   ~PgDatabase();

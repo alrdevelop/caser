@@ -1,11 +1,13 @@
 ﻿// caserver.cpp : Defines the entry point for the application.
 //
 
+#include "common/logger.h"
+#include "contracts/ca_info.h"
 #include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
-#include "openssl/provider.h"
-#include "openssl/utility.h"
+#include "openssl/crypto_provider.h"
+#include "openssl/utils.h"
 #include "postgre/pgdatabase.h"
 #include <cstdint>
 #include <cstring>
@@ -28,18 +30,6 @@
 using namespace std;
 
 
-void print(const std::pair<openssl::X509Uptr, openssl::EvpPkeyUPtr>& data) {
-  for(auto v : openssl::get_private_key_data(data.second.get())) {
-    cout << (unsigned char)v;
-  }
-  for(auto v : openssl::get_public_key_data(data.second.get())) {
-    cout << (unsigned char)v;
-  }
-  for(auto v : openssl::get_certificate_data(data.first.get())) {
-    cout << (unsigned char)v;
-  }
-}
-
 contracts::JuridicalPersonCertificateRequest caReq;
 contracts::JuridicalPersonCertificateRequest clientReq;
 
@@ -49,7 +39,8 @@ int main() {
     // OPENSSL_add_all_algorithms_conf();
     // OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     spdlog::set_level(spdlog::level::level_enum::debug);
-    openssl::Provider provider{nullptr};
+    // openssl::Provider provider{nullptr};
+    openssl::OpensslCryptoProvider provider;
 
     contracts::JuridicalPersonCertificateRequest caReq;
     caReq.commonName = "ООО Очень Тестовый УЦ";
@@ -93,35 +84,28 @@ int main() {
       "http://test.ru/root.crt"
     };
 
-    auto root = provider.GenerateCa(caReq);
-    auto client = provider.GenerateClientCertitificate(clientReq, crlDistributionPoints, ocspEndPoints, caEndPoints, root.first, root.second);
-    for(auto it : client.first) {
-      cout << (unsigned char) it;
-    }
+
+    auto root = provider.GeneratedCACertificate(caReq);
+
+    contracts::CaInfo caInfo {
+      .crlDistributionPoints = crlDistributionPoints,
+      .ocspEndPoints = ocspEndPoints,
+      .caEndPoints = caEndPoints,
+      .privateKey = root->privateKey,
+      .certificate = root->certificate
+    };
+
+    auto client = provider.GenerateClientCertitificate(clientReq, caInfo);
+    LOG_INFO(client->serialNumber.data());
+    LOG_INFO(client->thumbprint);
 
     // auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
     // print(client);
     // auto crl = provider.CreateCRL(issuerCert, issuerKey, std::vector<X509*>{client.first.get()});
 
-    auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
-    postrgre::PgDatabase db(connString);
+    // auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
+    // postrgre::PgDatabase db(connString);
 
-    contracts::CertificateAuthorityModel caModel;
-    caModel.commonName = caReq.commonName;
-    caModel.serial = "1221";
-    caModel.thumbprint = "1";
-    caModel.certificate = root.first;
-    caModel.privateKey = root.second;
-    caModel.issueDate = "2024-12-12";
-
-    // db.AddCA(caModel);
-
-    for(auto ca : db.GetAllCa()) {
-      auto a = ca;
-      for(auto c : a->certificate) {
-        cout << (unsigned char)c;
-      }
-    }
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -30,6 +31,9 @@ namespace contracts {
         std::string_view publicUrl;
     };
     
+    using CertificateModelPtr = std::shared_ptr<CertificateModel>;
+    using CertificateAuthorityModelPtr = std::shared_ptr<CertificateAuthorityModel>;
+
     using CertificateModels = PagedResponse<CertificateModel>;
     using CertificateAuthorityModels = PagedResponse<CertificateAuthorityModel>;
 }

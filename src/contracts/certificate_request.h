@@ -4,38 +4,39 @@
 #include "enums.h"
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace contracts {
 
     struct CertificateRequestBase {
         AlgorithmEnum algorithm{AlgorithmEnum::GostR3410_2012_256};
-        std::string commonName;
-        std::string country{"RU"};
-        std::string localityName;
-        std::string stateOrProvinceName;
-        std::string streetAddress;
-        std::string emailAddress;
+        std::string_view commonName;
+        std::string_view country{"RU"};
+        std::string_view localityName;
+        std::string_view stateOrProvinceName;
+        std::string_view streetAddress;
+        std::string_view emailAddress;
         uint16_t ttlInDays{365};
     };
 
     struct PhysicalPersonCertificateRequest : public CertificateRequestBase {
-        std::string inn;
-        std::string snils;
-        std::string givenName;
-        std::string surname;
+        std::string_view inn;
+        std::string_view snils;
+        std::string_view givenName;
+        std::string_view surname;
     };
 
     struct IndividualEntrepreneurCertificateRequest : public PhysicalPersonCertificateRequest {
-        std::string ogrnip;
+        std::string_view ogrnip;
     };
 
     struct JuridicalPersonCertificateRequest : public PhysicalPersonCertificateRequest {
-        std::string innLe;
-        std::string ogrn;
-        std::string organizationName;
-        std::string organizationUnitName;
-        std::string title;
+        std::string_view innLe;
+        std::string_view ogrn;
+        std::string_view organizationName;
+        std::string_view organizationUnitName;
+        std::string_view title;
     };
 
     typedef JuridicalPersonCertificateRequest CertificateRequest;
