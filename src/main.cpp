@@ -67,7 +67,7 @@ int main() {
     clientReq.surname = "Иванов";
     clientReq.snils = "12334536322";
     clientReq.innLe = "2234467890";
-    caReq.ogrn = "2224567890123";
+    clientReq.ogrn = "2224567890123";
     clientReq.organizationName = "ООО Рога и Копыта";
     clientReq.organizationUnitName = "Директорат";
     clientReq.title = "Предводитель";

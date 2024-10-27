@@ -1,5 +1,5 @@
-#ifndef _CASERV_POSRGRE_PGDATABASE_H_
-#define _CASERV_POSRGRE_PGDATABASE_H_
+#ifndef _CASERV_POSTGRE_PGDATABASE_H_
+#define _CASERV_POSTGRE_PGDATABASE_H_
 
 #include "./../common/appsettings.h"
 #include "./../base/idatabase.h"
@@ -10,7 +10,9 @@
 #include <pqxx/pqxx>
 #include <pqxx/connection>
 
-namespace postrgre {
+#include "connection_pool.h"
+
+namespace postgre {
 
 using namespace contracts;
 
@@ -34,8 +36,8 @@ public:
   std::vector<CertificateModelPtr> GetRevokedList(const std::string &caSerial);
 
 private:
-  std::string_view _connectionString;
+  ConnectionPool _connections;
 };
-} // namespace postrgre
+} // namespace postgre
 
-#endif //_CASERV_POSRGRE_PGDATABASE_H_
+#endif //_CASERV_POSTGRE_PGDATABASE_H_
