@@ -31,7 +31,7 @@ public:
   GetRevokedList(const std::string &caSerial) = 0;
 };
 
-using IDataBasePtr = std::shared_ptr<IDataBase>();
+using IDataBasePtr = std::shared_ptr<IDataBase>;
 
 } // namespace base
 

@@ -4,6 +4,7 @@
 #include "./../contracts/generated_certificate.h"
 #include "./../contracts/certificate_request.h"
 #include "./../contracts/ca_info.h"
+#include <memory>
 
 namespace base {
 
@@ -16,6 +17,8 @@ public:
   virtual PKCS12ContainerUPtr GenerateClientCertitificate(const JuridicalPersonCertificateRequest& req, const CaInfo& caInfo) = 0;
   virtual CertificateUPtr GeneratedCACertificate(const JuridicalPersonCertificateRequest& req) = 0;
 };
+
+using ICryptoProviderUPtr = std::unique_ptr<ICryptoProvider>;
 
 } // namespace base
 

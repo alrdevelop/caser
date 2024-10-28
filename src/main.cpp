@@ -1,16 +1,19 @@
 ﻿// caserver.cpp : Defines the entry point for the application.
 //
 
-#include "common/logger.h"
-#include "contracts/ca_info.h"
+#include "base/icrypto_provider.h"
+#include "base/idatabase.h"
 #include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
 #include "openssl/crypto_provider.h"
-#include "openssl/utils.h"
-#include "postgre/pgdatabase.h"
-#include <cstdint>
+#include <chrono>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <format>
+#include <fstream>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <openssl/bio.h>
@@ -24,8 +27,10 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <string_view>
-#include <utility>
 #include <vector>
+
+#include "postgre/pgdatabase.h"
+#include "service/caservice.h"
 
 using namespace std;
 
@@ -85,27 +90,40 @@ int main() {
     };
 
 
-    auto root = provider.GeneratedCACertificate(caReq);
+    // auto root = provider.GeneratedCACertificate(caReq);
 
-    contracts::CaInfo caInfo {
-      .crlDistributionPoints = crlDistributionPoints,
-      .ocspEndPoints = ocspEndPoints,
-      .caEndPoints = caEndPoints,
-      .privateKey = root->privateKey,
-      .certificate = root->certificate
-    };
+    // contracts::CaInfo caInfo {
+    //   .crlDistributionPoints = crlDistributionPoints,
+    //   .ocspEndPoints = ocspEndPoints,
+    //   .caEndPoints = caEndPoints,
+    //   .privateKey = root->privateKey,
+    //   .certificate = root->certificate
+    // };
 
-    auto client = provider.GenerateClientCertitificate(clientReq, caInfo);
-    LOG_INFO(client->serialNumber.data());
-    LOG_INFO(client->thumbprint);
+    // auto client = provider.GenerateClientCertitificate(clientReq, caInfo);
+    // LOG_INFO(client->serialNumber.data());
+    // LOG_INFO(client->thumbprint);
 
     // auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
     // print(client);
     // auto crl = provider.CreateCRL(issuerCert, issuerKey, std::vector<X509*>{client.first.get()});
 
-    // auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
     // postrgre::PgDatabase db(connString);
 
+    contracts::CreateCertificateAuthorityModel createCaModel;
+    createCaModel.request = caReq;
+    createCaModel.publicUrl = "http://testca/";
+
+
+    auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
+    base::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
+    base::ICryptoProviderUPtr crypt = std::make_unique<openssl::OpensslCryptoProvider>();
+    serivce::CaService caservice(db, std::move(crypt));
+    auto client = caservice.CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
+    std::ofstream file;
+    file.open("test.pfx", std::ios::out | std::ios::binary);
+    file.write(reinterpret_cast<const char*>(client->container.data()), client->container.size());
+    file.close();
 
   } catch (std::exception &ex) {
     cout << ex.what() << endl;

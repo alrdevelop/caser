@@ -4,6 +4,7 @@
 #include "subject_builder.h"
 #include "utils.h"
 #include <algorithm>
+#include <ctime>
 #include <memory>
 #include <string_view>
 

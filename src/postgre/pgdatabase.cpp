@@ -160,7 +160,7 @@ CertificateAuthorityModelPtr PgDatabase::GetCa(const std::string &serial) {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();
     static auto query = "SELECT \"serial\", \"thumbprint\", \"commonName\", "
-                        "\"issueDate\", \"certificate\", \"privateKey\" "
+                        "\"issueDate\", \"certificate\", \"privateKey\", \"publicUrl\" "
                         "FROM ca "
                         "WHERE UPPER(\"serial\") = UPPER($1) "
                         "ORDER BY \"issueDate\" LIMIT 1";
@@ -168,9 +168,9 @@ CertificateAuthorityModelPtr PgDatabase::GetCa(const std::string &serial) {
 
     std::vector<CertificateAuthorityModelPtr> result;
     for (auto [serial, thumbprint, commonName, issueDate, certificate,
-               privateKey] :
+               privateKey, publicUrl] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, pqxx::bytes, pqxx::bytes>(query,
+                    std::string_view, pqxx::bytes, pqxx::bytes, std::string_view>(query,
                                                                 {serial})) {
       auto model = std::make_shared<CertificateAuthorityModel>();
       model->serial = serial;
@@ -181,6 +181,7 @@ CertificateAuthorityModelPtr PgDatabase::GetCa(const std::string &serial) {
           std::vector<std::byte>(certificate.begin(), certificate.end());
       model->privateKey =
           std::vector<std::byte>(privateKey.begin(), privateKey.end());
+      model->publicUrl = publicUrl;
       result.push_back(model);
     }
     tran.commit();
@@ -198,14 +199,14 @@ std::vector<CertificateAuthorityModelPtr> PgDatabase::GetAllCa() {
     auto conn = scope.GetConnection();
     std::vector<CertificateAuthorityModelPtr> result;
     static auto query = "SELECT \"serial\", \"thumbprint\", \"commonName\", "
-                        "\"issueDate\", \"certificate\", \"privateKey\" "
+                        "\"issueDate\", \"certificate\", \"privateKey\", \"publicUrl\" "
                         "FROM ca";
     pqxx::work tran(*conn);
 
     for (auto [serial, thumbprint, commonName, issueDate, certificate,
-               privateKey] :
+               privateKey, publicUrl] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, pqxx::bytes, pqxx::bytes>(query)) {
+                    std::string_view, pqxx::bytes, pqxx::bytes, std::string_view>(query)) {
       auto model = std::make_shared<CertificateAuthorityModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -215,6 +216,7 @@ std::vector<CertificateAuthorityModelPtr> PgDatabase::GetAllCa() {
           std::vector<std::byte>(certificate.begin(), certificate.end());
       model->privateKey =
           std::vector<std::byte>(privateKey.begin(), privateKey.end());
+      model->publicUrl = publicUrl;
       result.push_back(model);
     }
     tran.commit();
