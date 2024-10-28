@@ -258,5 +258,6 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
     return std::move(CertificateUPtr(result));
 
   } catch (...) {
+    throw std::runtime_error("GenerateX509Certitificate error.");
   }
 }

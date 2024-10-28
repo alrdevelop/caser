@@ -47,6 +47,28 @@ private:
   std::condition_variable _conditon;
 };
 
+using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
+
+class ConnectionScope {
+public:
+  ConnectionScope(ConnectionPoolPtr connectionPool)  : _connectionPool(connectionPool) {
+    _connection = _connectionPool->GetConnection();
+  }
+
+  ~ConnectionScope() {
+    if(_connection != nullptr) {
+      _connectionPool->FreeConnection(_connection);
+    }
+  }
+
+  ConnectionPtr GetConnection() {
+    return _connection;
+  }
+  
+private:
+  ConnectionPoolPtr _connectionPool{nullptr};
+  ConnectionPtr _connection;
+};
 } // namespace postgre
 
 #endif //_CASERV_POSTGRE_CONENCTION_POOL_H_

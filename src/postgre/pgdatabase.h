@@ -36,7 +36,7 @@ public:
   std::vector<CertificateModelPtr> GetRevokedList(const std::string &caSerial);
 
 private:
-  ConnectionPool _connections;
+  ConnectionPoolPtr _connectionPool;
 };
 } // namespace postgre
 
