@@ -1,18 +1,13 @@
 ﻿// caserver.cpp : Defines the entry point for the application.
 //
 
-#include "base/icrypto_provider.h"
-#include "base/idatabase.h"
-#include "contracts/certificate_model.h"
-#include "contracts/certificate_request.h"
-#include "contracts/enums.h"
-#include "openssl/crypto_provider.h"
 #include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <format>
 #include <fstream>
+#include <httpserver.hpp>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -27,10 +22,18 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <string_view>
+#include <utility>
 #include <vector>
 
+#include "base/icrypto_provider.h"
+#include "base/idatabase.h"
+#include "contracts/certificate_model.h"
+#include "contracts/certificate_request.h"
+#include "contracts/enums.h"
+#include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
+#include "httpservice/get_crl.h"
 
 using namespace std;
 
@@ -112,20 +115,25 @@ int main() {
 
     contracts::CreateCertificateAuthorityModel createCaModel;
     createCaModel.request = caReq;
-    createCaModel.publicUrl = "http://testca/";
+    createCaModel.publicUrl = "http://testca";
 
 
     auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
     base::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
     base::ICryptoProviderUPtr crypt = std::make_unique<openssl::OpensslCryptoProvider>();
-    serivce::CaService caservice(db, std::move(crypt));
-    auto client = caservice.CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
-    std::ofstream file;
-    file.open("test.pfx", std::ios::out | std::ios::binary);
-    file.write(reinterpret_cast<const char*>(client->container.data()), client->container.size());
-    file.close();
+    auto caService = std::make_shared<serivce::CaService>(db, std::move(crypt));
 
-  } catch (std::exception &ex) {
+    httpserver::webserver ws = httpserver::create_webserver(8080);
+    httpservice::GetCrlEndpoint getCrl(caService);
+    ws.register_resource("/crt", &getCrl);
+    ws.start(true);
+
+    // auto client = caservice.CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
+    // std::ofstream file;
+    // file.open("test.pfx", std::ios::out | std::ios::binary);
+    // file.write(reinterpret_cast<const char*>(client->container.data()), client->container.size());
+    // file.close();
+ } catch (std::exception &ex) {
     cout << ex.what() << endl;
   }
   return 0;

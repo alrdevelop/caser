@@ -21,9 +21,10 @@ add_executable (caserver
   "postgre/pgdatabase.cpp"
   "openssl/crypto_provider.cpp"
   "service/caservice.cpp"
+  "httpservice/get_crl.cpp"
 )
 
-target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq)
+target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq httpserver)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET caserver PROPERTY CXX_STANDARD 20)

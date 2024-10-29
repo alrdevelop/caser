@@ -3,19 +3,20 @@
 
 #include <cstddef>
 #include <memory>
-#include <string_view>
+#include <string>
 #include <vector>
 namespace contracts {
 
 struct CaInfo {
-  std::vector<std::string_view> crlDistributionPoints;
-  std::vector<std::string_view> ocspEndPoints;
-  std::vector<std::string_view> caEndPoints;
+  std::vector<std::string> crlDistributionPoints;
+  std::vector<std::string> ocspEndPoints;
+  std::vector<std::string> caEndPoints;
   std::vector<std::byte> privateKey;
   std::vector<std::byte> certificate;
 };
 
 using CaInfoUPtr = std::unique_ptr<CaInfo>;
+using CaInfoPtr = std::shared_ptr<CaInfo>;
 
 } // namespace contracts
 
