@@ -94,7 +94,7 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.11"}};
 
 static std::map<int, std::string> CrlExtensions{
-    {NID_authority_key_identifier, "keyid,issuer"}, {NID_crl_number, "1"}};
+    {NID_authority_key_identifier, "keyid,issuer"},* {NID_crl_number, "1"}};
 class Provider {
 public:
   Provider(ENGINE *engine) : _engine(engine) {}

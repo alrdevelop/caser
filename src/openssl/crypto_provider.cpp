@@ -4,12 +4,16 @@
 #include "subject_builder.h"
 #include "utils.h"
 #include <algorithm>
+#include <atomic>
 #include <ctime>
 #include <memory>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 #include <string_view>
+#include <utility>
 
 #include "./../common/datetime.h"
 
@@ -51,6 +55,10 @@ static std::map<int, std::string> ClientExtensions{
                         "1.2.643.3.88.1.1.1.9,"
                         "1.2.643.3.88.1.1.1.10,"
                         "1.2.643.3.88.1.1.1.11"}};
+
+static std::map<int, std::string> CrlExtensions{
+    {NID_authority_key_identifier, "keyid,issuer"},
+    /*{NID_crl_number, "1"}*/};
 
 OpensslCryptoProvider::OpensslCryptoProvider() {}
 
@@ -110,9 +118,11 @@ CertificateUPtr OpensslCryptoProvider::GeneratedCACertificate(
 
 CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
                                            const CaInfo &CaInfo) {
-  //auto *asn1Tm = ASN1_UTCTIME_new();
-  auto *lasUpdate = ASN1_UTCTIME_new();
-  auto *nextUpdate = ASN1_UTCTIME_new();
+  EVP_PKEY *issuerKp = openssl::get_private_key(CaInfo.privateKey);
+  X509 *issuerCert = openssl::get_certificate(CaInfo.certificate);
+
+  auto lasUpdate = ASN1_UTCTIME_new();
+  auto nextUpdate = ASN1_UTCTIME_new();
   auto utcTimeNow = datetime::utc_now();
   ASN1_UTCTIME_adj(lasUpdate, utcTimeNow, 0, 0);
   ASN1_UTCTIME_adj(nextUpdate, utcTimeNow, 1, 0);
@@ -133,27 +143,26 @@ CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
 
   for(auto e : req.entries) {
     if(e.serialNumber.empty()) continue;
-    auto revoked = X509_REVOKED_new();
-    BIGNUM *bn{nullptr};
-    BN_hex2bn(&bn, e.serialNumber.data());
-    BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 
-  }
+    // auto revoked = X509_REVOKED_new();
 
-  for (auto cert : certs) {
-    auto revoked = X509_REVOKED_new();
-    auto serial = X509_get_serialNumber(cert);
-    OSSL_CHECK(
-        X509_REVOKED_set_serialNumber(revoked, X509_get_serialNumber(cert)));
-    OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
-    OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+    // BIGNUM *bn{nullptr};
+    // BN_hex2bn(&bn, e.serialNumber.data());
+    // auto serial = BN_to_ASN1_INTEGER(bn, nullptr);
+    // OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
+    // ASN1_INTEGER_free(serial);
 
-    auto rtmp = ASN1_ENUMERATED_new();
-    ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
-    OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
-    ASN1_ENUMERATED_free(rtmp);
+    // auto revokeDate = ASN1_UTCTIME_new();
+    // ASN1_UTCTIME_adj(lasUpdate, datetime::from_utcstring(e.revokationDate.data()), 0, 0);
+    // OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, revokeDate));
+    // ASN1_UTCTIME_free(revokeDate);
 
-    ASN1_INTEGER_free(serial);
+    // auto rtmp = ASN1_ENUMERATED_new();
+    // ASN1_ENUMERATED_set(rtmp, 3 /*REV_KEY_COMPROMISE*/);
+    // OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+    // ASN1_ENUMERATED_free(rtmp);
+    auto revoked = CreateRevokedEntry(e.serialNumber, e.revokationDate);
+    OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked.get()));
   }
   OSSL_CHECK(X509_CRL_sort(crl));
   // Init context
@@ -181,7 +190,17 @@ CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
 
   const EVP_MD *md = EVP_get_digestbynid(GetMDId(issuerKp));
   OSSL_CHECK(X509_CRL_sign(crl, issuerKp, md));
-}
+  
+  X509_free(issuerCert);
+  EVP_PKEY_free(issuerKp);
+
+  auto result = new Crl{
+    .content = openssl::get_crl_data(crl)
+  };
+
+  X509_CRL_free(crl);
+  return std::move(CrlUPtr(result));
+};
 
 OpensslCryptoProvider::EvpPkeyUPtr
 OpensslCryptoProvider::GenerateKeyPair(const PkeyParams &params) {
@@ -342,4 +361,26 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
   } catch (...) {
     throw std::runtime_error("GenerateX509Certitificate error.");
   }
+}
+
+OpensslCryptoProvider::X509RevokedUptr OpensslCryptoProvider::CreateRevokedEntry(const std::string_view &serial, const std::string_view &revokeDate) {
+  auto revoked = X509_REVOKED_new();
+
+  BIGNUM *bn{nullptr};
+  BN_hex2bn(&bn, serial.data());
+  auto asn1Serial = BN_to_ASN1_INTEGER(bn, nullptr);
+  OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, asn1Serial));
+  ASN1_INTEGER_free(asn1Serial);
+
+  auto asn1RevokeDate = ASN1_UTCTIME_new();
+  ASN1_UTCTIME_adj(asn1RevokeDate, datetime::from_utcstring(revokeDate.data()), 0, 0);
+  OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1RevokeDate));
+  ASN1_UTCTIME_free(asn1RevokeDate);
+
+  auto rtmp = ASN1_ENUMERATED_new();
+  ASN1_ENUMERATED_set(rtmp, 3 /*REV_KEY_COMPROMISE*/);
+  OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+  ASN1_ENUMERATED_free(rtmp);
+
+  return std::move(OpensslCryptoProvider::X509RevokedUptr(revoked, X509_REVOKED_free));
 }

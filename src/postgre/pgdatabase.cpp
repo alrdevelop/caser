@@ -3,6 +3,7 @@
 #include "connection_pool.h"
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <openssl/rsa.h>
 #include <pqxx/internal/concat.hxx>
@@ -165,6 +166,7 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
         "WHERE \"revokedDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1) ORDER BY \"revokeDate\" DESC LIMIT 1";
     pqxx::work tran(*conn);
     std::vector<CertificateModelPtr> result;
+
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
@@ -181,8 +183,9 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
     }
     if(result.empty()) return nullptr;
     return result[0];
-  } catch (...) {
-  
+  } catch (std::exception& ex) {
+    auto a = ex.what();
+    LOG_ERROR("{}", ex.what());
   }
 }
 
