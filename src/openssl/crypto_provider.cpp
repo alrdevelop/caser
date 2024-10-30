@@ -6,7 +6,12 @@
 #include <algorithm>
 #include <ctime>
 #include <memory>
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
 #include <string_view>
+
+#include "./../common/datetime.h"
 
 using namespace openssl;
 
@@ -63,7 +68,7 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
           openssl::get_certificate(caInfo.certificate), nullptr),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
-    return std::move(PKCS12ContainerUPtr(result));  
+  return std::move(PKCS12ContainerUPtr(result));
 }
 
 PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
@@ -78,7 +83,7 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
           openssl::get_certificate(caInfo.certificate), nullptr),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
-    return std::move(PKCS12ContainerUPtr(result));  
+  return std::move(PKCS12ContainerUPtr(result));
 }
 
 PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
@@ -93,13 +98,89 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
           openssl::get_certificate(caInfo.certificate), nullptr),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
-    return std::move(PKCS12ContainerUPtr(result));  
+  return std::move(PKCS12ContainerUPtr(result));
 }
 
 CertificateUPtr OpensslCryptoProvider::GeneratedCACertificate(
     const JuridicalPersonCertificateRequest &req) {
   auto subject = JuridicalPersonSubjectBuilder.SubjectName(req);
-  return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays, nullptr);
+  return GenerateX509Certitificate(req.algorithm, subject, req.ttlInDays,
+                                   nullptr);
+}
+
+CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
+                                           const CaInfo &CaInfo) {
+  //auto *asn1Tm = ASN1_UTCTIME_new();
+  auto *lasUpdate = ASN1_UTCTIME_new();
+  auto *nextUpdate = ASN1_UTCTIME_new();
+  auto utcTimeNow = datetime::utc_now();
+  ASN1_UTCTIME_adj(lasUpdate, utcTimeNow, 0, 0);
+  ASN1_UTCTIME_adj(nextUpdate, utcTimeNow, 1, 0);
+
+  auto crl = X509_CRL_new();
+  OSSL_CHECK(X509_CRL_set_version(crl, X509_CRL_VERSION_2));
+  OSSL_CHECK(X509_CRL_set_issuer_name(crl, X509_get_subject_name(issuerCert)));
+  OSSL_CHECK(X509_CRL_set_lastUpdate(crl, lasUpdate));
+  // ASN1_UTCTIME_adj(asn1Tm, now, 10, 0);
+  OSSL_CHECK(X509_CRL_set_nextUpdate(crl, nextUpdate));
+  ASN1_UTCTIME_free(nextUpdate);
+  ASN1_UTCTIME_free(lasUpdate);
+
+  auto crlNumber = ASN1_INTEGER_new();
+  ASN1_INTEGER_set(crlNumber, req.number);
+  OSSL_CHECK(X509_CRL_add1_ext_i2d(crl, NID_crl_number, crlNumber, 0, 0));
+  ASN1_INTEGER_free(crlNumber);
+
+  for(auto e : req.entries) {
+    if(e.serialNumber.empty()) continue;
+    auto revoked = X509_REVOKED_new();
+    BIGNUM *bn{nullptr};
+    BN_hex2bn(&bn, e.serialNumber.data());
+    BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
+
+  }
+
+  for (auto cert : certs) {
+    auto revoked = X509_REVOKED_new();
+    auto serial = X509_get_serialNumber(cert);
+    OSSL_CHECK(
+        X509_REVOKED_set_serialNumber(revoked, X509_get_serialNumber(cert)));
+    OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, asn1Tm));
+    OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+
+    auto rtmp = ASN1_ENUMERATED_new();
+    ASN1_ENUMERATED_set(rtmp, REV_KEY_COMPROMISE);
+    OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
+    ASN1_ENUMERATED_free(rtmp);
+
+    ASN1_INTEGER_free(serial);
+  }
+  OSSL_CHECK(X509_CRL_sort(crl));
+  // Init context
+  X509V3_CTX ctx;
+  // setup context
+  X509V3_set_ctx(&ctx, issuerCert, nullptr, nullptr, crl, 0);
+
+  // setup db and db_meth, we need it for certificate policies
+  X509V3_CONF_METHOD conf;
+  ConfigDatabase db;
+  conf.get_string = openssl::db_get_string;
+  conf.get_section = openssl::db_get_section;
+  conf.free_string = openssl::db_free_string;
+  conf.free_section = openssl::db_free_section;
+  ctx.db = &db;
+  ctx.db_meth = &conf;
+
+  for (auto extIt : CrlExtensions) {
+    auto ext =
+        X509V3_EXT_conf_nid(nullptr, &ctx, extIt.first, extIt.second.c_str());
+    if (ext != nullptr) {
+      OSSL_CHECK(X509_CRL_add_ext(crl, ext, -1));
+    }
+  }
+
+  const EVP_MD *md = EVP_get_digestbynid(GetMDId(issuerKp));
+  OSSL_CHECK(X509_CRL_sign(crl, issuerKp, md));
 }
 
 OpensslCryptoProvider::EvpPkeyUPtr
@@ -250,7 +331,7 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
     OSSL_CHECK(X509_sign(cert, issuerKp, md));
     auto thumbprint = openssl::get_thumbprint_SHA1(cert);
     auto serialHex = openssl::get_serial_hex(cert);
-    
+
     auto result = new Certificate();
     result->certificate = openssl::get_certificate_data(cert);
     result->privateKey = openssl::get_private_key_data(key.get());

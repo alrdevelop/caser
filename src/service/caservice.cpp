@@ -66,7 +66,7 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
                                  .certificate = caCert->certificate,
                                  .privateKey = caCert->privateKey,
                                  .publicUrl = model.publicUrl};
-  auto dt = datetime_now();
+  auto dt = datetime::utc_now_str();
   data.issueDate = std::string_view(dt);
 
   _db->AddCA(data);
@@ -106,6 +106,44 @@ PKCS12ContainerUPtr CaService::CreateClientCertificate(
   return std::move(client);
 }
 
+std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
+  auto crl = _db->GetActualCrl(caSerial);
+  if (crl == nullptr)
+    return InvalidateCrl(caSerial);
+  auto lastRevoked = _db->GetLastRevoked(caSerial);
+  if (lastRevoked != nullptr && crl->lastSerial != lastRevoked->serial)
+    return InvalidateCrl(caSerial);
+  return crl->content;
+}
+
+std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
+  //TODO: optimize db call
+  auto crlInfo = _db->GetActualCrl(caSerial);
+  auto lastRevoked = _db->GetLastRevoked(caSerial);
+  auto caInfo = GetCaInfo(caSerial);
+  long number = 1;
+  if(crlInfo != nullptr) {
+    number = crlInfo->number ++;
+  }
+  auto revokedCerts = _db->GetRevokedList(caSerial);
+  CrlRequest req;
+  for(auto cert : revokedCerts) {
+    req.entries.push_back(CrlEntry{
+      .serialNumber = cert->serial,
+      .revokationDate = cert->revokeDate
+    });
+  }
+  auto crl = _crypto->GenerateCrl(req, caInfo);
+  _db->AddCrl(CrlModel{
+    .caSerial = caSerial,
+    .number = number,
+    .issueDate = datetime::utc_now_str(),
+    .lastSerial = lastRevoked->serial,
+    .content = crl->content
+  });
+  return crl->content;
+}
+
 CaInfo CaService::GetCaInfo(const std::string_view &caSerial) {
   auto caCert = _db->GetCa(caSerial.data());
   if (caCert == nullptr)
@@ -131,7 +169,7 @@ void CaService::SaveClientCertificate(const std::string_view &caSerial,
   model.serial = container->serialNumber;
   model.thumbprint = container->thumbprint;
   model.commonName = commonName;
-  auto dt = datetime_now();
+  auto dt = datetime::utc_now_str();
   model.issueDate = std::string_view(dt);
   _db->AddCertificate(model);
 }

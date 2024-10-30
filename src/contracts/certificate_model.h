@@ -33,11 +33,23 @@ namespace contracts {
         std::string_view publicUrl;
     };
 
+    struct CrlModel {
+        std::string_view caSerial;
+        long number;
+        std::string_view issueDate;
+        std::string_view lastSerial;
+        std::vector<std::byte> content;
+    };
+
     using CertificateModelPtr = std::shared_ptr<CertificateModel>;
     using CertificateAuthorityModelPtr = std::shared_ptr<CertificateAuthorityModel>;
+    using CrlModelPtr = std::shared_ptr<CrlModel>;
 
-    using CertificateModels = PagedResponse<CertificateModel>;
-    using CertificateAuthorityModels = PagedResponse<CertificateAuthorityModel>;
+    using CertificateModels = PagedResponse<CertificateModelPtr>;
+    using CertificateAuthorityModels = PagedResponse<CertificateAuthorityModelPtr>;
+    using CrlModels = PagedResponse<CrlModelPtr>;
+
+
 
 
     //TODO: separate db models and service requests/responses

@@ -22,18 +22,23 @@ public:
   PgDatabase(const std::string_view& connectionString);
   ~PgDatabase();
 
-  CertificateModelPtr GetCertificate(const std::string &serial);
-  std::vector<CertificateModelPtr> GetCertificates(const std::string &caSerial);
-  std::vector<CertificateModelPtr> GetAllCertificates();
-  CertificateAuthorityModelPtr GetCa(const std::string &serial);
-  std::vector<CertificateAuthorityModelPtr> GetAllCa();
+  CertificateModelPtr GetCertificate(const std::string &serial) override;
+  std::vector<CertificateModelPtr> GetCertificates(const std::string &caSerial) override;
+  std::vector<CertificateModelPtr> GetAllCertificates() override;
+  CertificateAuthorityModelPtr GetCa(const std::string &serial) override;
+  std::vector<CertificateAuthorityModelPtr> GetAllCa() override;
   
-  void AddCertificate(const CertificateModel &cert);
-  void AddCA(const CertificateAuthorityModel &ca);
+  void AddCertificate(const CertificateModel &cert) override;
+  void AddCA(const CertificateAuthorityModel &ca) override;
   
   void MakeCertificateRevoked(const std::string &serial,
-                              const std::string &revokeDate);
-  std::vector<CertificateModelPtr> GetRevokedList(const std::string &caSerial);
+                              const std::string &revokeDate)  override;
+  std::vector<CertificateModelPtr> GetRevokedList(const std::string &caSerial) override;
+  CertificateModelPtr GetLastRevoked(const std::string &caSerial) override;
+
+  void AddCrl(const CrlModel &crl) override;
+  CrlModelPtr GetActualCrl(const std::string &caSerial) override;
+
 
 private:
   ConnectionPoolPtr _connectionPool;

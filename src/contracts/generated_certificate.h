@@ -22,8 +22,13 @@ namespace contracts {
         std::string thumbprint;
     };
 
+    struct Crl {
+        std::vector<std::byte> content;
+    };
+
     using PKCS12ContainerUPtr = std::unique_ptr<PKCS12Container>;
     using CertificateUPtr = std::unique_ptr<Certificate>;
+    using CrlUPtr = std::unique_ptr<Crl>;
 
 }
 

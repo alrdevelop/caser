@@ -3,9 +3,11 @@
 
 #include "./../base/icrypto_provider.h"
 #include "./../base/idatabase.h"
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace serivce {
 
@@ -21,6 +23,8 @@ public:
   std::vector<CertificateModelPtr> GetAllCertificates();
   StoredCertificateAuthorityModelPtr GetCa(const std::string &serial);
   std::vector<StoredCertificateAuthorityModelPtr> GetAllCa();
+  std::vector<std::byte> GetCrl(const std::string &caSerial);
+  std::vector<std::byte> InvalidateCrl(const std::string &caSerial);
 
   StoredCertificateAuthorityModelPtr CreateCA(const CreateCertificateAuthorityModel& model);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const JuridicalPersonCertificateRequest& req);

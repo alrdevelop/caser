@@ -41,6 +41,16 @@ namespace contracts {
 
     typedef JuridicalPersonCertificateRequest CertificateRequest;
 
+    struct CrlEntry {
+        std::string_view serialNumber;
+        std::string_view revokationDate;
+    };
+
+    struct CrlRequest {
+        long number;
+        std::vector<CrlEntry> entries;
+    };
+
 } // namespace contracts
 
 #endif //_CASERV_CONTRACTS_CERTIFICATE_REQUEST_H_

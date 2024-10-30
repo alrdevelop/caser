@@ -125,7 +125,7 @@ int main() {
 
     httpserver::webserver ws = httpserver::create_webserver(8080);
     httpservice::GetCrlEndpoint getCrl(caService);
-    ws.register_resource("/crt", &getCrl);
+    ws.register_resource(getCrl.Route(), &getCrl);
     ws.start(true);
 
     // auto client = caservice.CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);

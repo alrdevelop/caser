@@ -13,10 +13,11 @@ class GetCrlEndpoint : public web::ApiGetEndpoint<std::string_view> {
 public:
   GetCrlEndpoint(serivce::CaServicePtr caService);
   virtual ~GetCrlEndpoint();
+  const char* Route() const override { return "crt/{crtFile}";}
 
 protected:
-  std::string_view BuildRequestModel(const httpserver::http_request &req);
-  HttpResponsePtr Handle(const std::string_view &request);
+  std::string_view BuildRequestModel(const httpserver::http_request &req) override;
+  HttpResponsePtr Handle(const std::string_view &crlFileName) override;
 
 private:
   serivce::CaServicePtr _caService;

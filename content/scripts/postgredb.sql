@@ -50,6 +50,21 @@ ALTER TABLE public.certificates OWNER TO "admin";
 GRANT ALL ON TABLE public.certificates TO "admin";
 
 
+-- public.crl определение
+
+CREATE TABLE public.crl (
+	"caSerial" varchar(250) NOT NULL,
+	"number" integer NOT NULL,
+	"issueDate" timestamp with time zone NOT NULL,
+	"lastSerial" varchar(250) NULL,
+	"content" bytea NOT NULL,
+	CONSTRAINT crl_pk PRIMARY KEY ("caSerial","number")
+);
+-- Permissions
+
+ALTER TABLE public.crl OWNER TO "admin";
+GRANT ALL ON TABLE public.crl TO "admin";
+
 
 
 -- Permissions
