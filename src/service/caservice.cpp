@@ -68,8 +68,8 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
                                  .certificate = caCert->certificate,
                                  .privateKey = caCert->privateKey,
                                  .publicUrl = model.publicUrl};
-  auto dt = datetime::utc_now_str();
-  data.issueDate = std::string_view(dt);
+  auto dt = datetime::utc_now();
+  data.issueDate = dt;
 
   _db->AddCA(data);
   return GetCa(caCert->serialNumber);
@@ -137,7 +137,7 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
     });
   }
   auto crl = _crypto->GenerateCrl(req, caInfo);
-  auto dtNow = datetime::utc_now_str();
+  auto dtNow = datetime::utc_now();
   CrlModel model {
     .caSerial = caSerial,
     .number = number,
@@ -174,7 +174,7 @@ void CaService::SaveClientCertificate(const std::string_view &caSerial,
   model.serial = container->serialNumber;
   model.thumbprint = container->thumbprint;
   model.commonName = commonName;
-  auto dt = datetime::utc_now_str();
-  model.issueDate = std::string_view(dt);
+  auto dt = datetime::utc_now();
+  model.issueDate = dt;
   _db->AddCertificate(model);
 }

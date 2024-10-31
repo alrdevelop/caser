@@ -38,8 +38,8 @@ protected:
     response["thumbprint"] = cert->thumbprint;
     response["caSerial"] = cert->caSerial;
     response["commonName"] = cert->commonName;
-    response["issueDate"] = cert->issueDate;
-    response["revokeDate"] = cert->revokeDate;
+    response["issueDate"] = datetime::to_utcstring(*cert->issueDate);
+    response["revokeDate"] = datetime::to_utcstring(*cert->revokeDate);
 
     return HttpResponsePtr(new httpserver::string_response(response.dump(), 200));
   }

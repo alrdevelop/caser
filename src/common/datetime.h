@@ -19,9 +19,12 @@ inline std::string utc_now_str() {
   return std::format("{:%Y-%m-%d %H:%M:%S %Z}", t);
 }
 
-inline time_t utc_now() {
+inline DateTimePtr utc_now() {
   auto t = std::chrono::system_clock::now();
-  return std::chrono::system_clock::to_time_t(t);
+  auto dt = new DateTime();
+  *dt = std::chrono::system_clock::to_time_t(t);
+  return DateTimePtr(dt);
+  //return std::chrono::system_clock::to_time_t(t);
 }
 
 inline time_t from_utcstring(const std::string &dateTime) {

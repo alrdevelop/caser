@@ -28,7 +28,7 @@ struct CertificateAuthorityModel {
   std::string_view serial;
   std::string_view thumbprint;
   std::string_view commonName;
-  std::time_t issueDate;
+  DateTimePtr issueDate;
   std::vector<std::byte> certificate;
   std::vector<std::byte> privateKey;
   std::string_view publicUrl;

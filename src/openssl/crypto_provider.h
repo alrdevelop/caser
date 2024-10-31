@@ -74,7 +74,7 @@ private:
 
   EvpPkeyUPtr GenerateKeyPair(const PkeyParams &params);
   CertificateUPtr GenerateX509Certitificate(const AlgorithmEnum &algorithm,const std::vector<std::pair<std::string_view, std::string_view>> &subject, const long &ttlInDays, const CaInfo* caInfo);
-  X509RevokedUptr CreateRevokedEntry(const std::string_view &serial, const std::string_view &revokeDate);
+  X509RevokedUptr CreateRevokedEntry(const std::string_view &serial, const DateTime &revokeDate);
 };
 } // namespace openssl
 
