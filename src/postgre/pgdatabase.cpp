@@ -52,7 +52,11 @@ CertificateModelPtr PgDatabase::GetCertificate(const std::string &certSerial) {
       return nullptr;
     return result[0];
 
-  } catch (...) {
+  } 
+  catch (const std::exception &ex) {
+    LOG_ERROR("{}", ex.what());
+  }
+  catch (...) {
     throw;
   }
 }

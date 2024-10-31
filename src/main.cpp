@@ -30,6 +30,7 @@
 #include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
+#include "httpservice/get_certificate.h"
 #include "httpservice/get_crt.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
@@ -135,8 +136,10 @@ int main() {
     httpserver::webserver ws = httpserver::create_webserver(8080);
     httpservice::GetCrlEndpoint getCrl(caService);
     httpservice::GetCrtEndpoint getCrt(caService);
+    httpservice::GetCertificateEndpoint getCertificate(caService);
     ws.register_resource(getCrl.Route(), &getCrl);
     ws.register_resource(getCrt.Route(), &getCrt);
+    ws.register_resource(getCertificate.Route(), &getCertificate);
     ws.start(true);
 
  } catch (std::exception &ex) {
