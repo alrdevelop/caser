@@ -31,9 +31,9 @@ inline time_t from_utcstring(const std::string &dateTime) {
   return mktime(&tm);
 }
 
-inline const std::string& to_utcstring(const DateTime& dt){
-  struct std::tm tm;
-  return std::put_time(std::gmtime(&dt),":%Y-%m-%d %H:%M:%S %Z");
+inline std::string to_utcstring(const DateTime& dt){
+  auto t = std::chrono::system_clock::from_time_t(dt);
+  return std::format("{:%Y-%m-%d %H:%M:%S %Z}", t);
 }
 
 
