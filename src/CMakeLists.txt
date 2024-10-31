@@ -22,9 +22,10 @@ add_executable (caserver
   "openssl/crypto_provider.cpp"
   "service/caservice.cpp"
   "httpservice/get_crl.cpp"
+  "httpservice/get_crt.cpp"
 )
 
-target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq httpserver)
+target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq httpserver microhttpd)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET caserver PROPERTY CXX_STANDARD 20)

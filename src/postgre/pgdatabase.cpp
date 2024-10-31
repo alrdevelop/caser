@@ -122,7 +122,7 @@ std::vector<CertificateModelPtr> PgDatabase::GetAllCertificates() {
 }
 
 std::vector<CertificateModelPtr>
-PgDatabase::GetRevokedList(const std::string &caSerial) {
+PgDatabase::GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) {
   try {
     std::vector<CertificateModelPtr> result;
     ConnectionScope scope(_connectionPool);
@@ -131,7 +131,7 @@ PgDatabase::GetRevokedList(const std::string &caSerial) {
         "SELECT \"serial\", \"thumbprint\", \"caSerial\", "
         "\"commonName\", \"issueDate\", \"revokeDate\" "
         "FROM certificates "
-        "WHERE \"revokedDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1)";
+        "WHERE \"revokeDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1)";
     pqxx::work tran(*conn);
 
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
@@ -163,7 +163,7 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
         "SELECT \"serial\", \"thumbprint\", \"caSerial\", "
         "\"commonName\", \"issueDate\", \"revokeDate\" "
         "FROM certificates "
-        "WHERE \"revokedDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1) ORDER BY \"revokeDate\" DESC LIMIT 1";
+        "WHERE \"revokeDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1) ORDER BY \"revokeDate\" DESC LIMIT 1";
     pqxx::work tran(*conn);
     std::vector<CertificateModelPtr> result;
 
@@ -183,9 +183,8 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
     }
     if(result.empty()) return nullptr;
     return result[0];
-  } catch (std::exception& ex) {
-    auto a = ex.what();
-    LOG_ERROR("{}", ex.what());
+  } catch (...) {
+    throw;
   }
 }
 

@@ -30,6 +30,7 @@
 #include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
+#include "httpservice/get_crt.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
@@ -123,18 +124,21 @@ int main() {
     base::ICryptoProviderUPtr crypt = std::make_unique<openssl::OpensslCryptoProvider>();
     auto caService = std::make_shared<serivce::CaService>(db, std::move(crypt));
 
-    auto res = caService->InvalidateCrl("D8B3F0B524C07A2E6BFD533EF6C23F52");
+    // auto res = caService->InvalidateCrl("D8B3F0B524C07A2E6BFD533EF6C23F52");
 
-    httpserver::webserver ws = httpserver::create_webserver(8080);
-    httpservice::GetCrlEndpoint getCrl(caService);
-    ws.register_resource(getCrl.Route(), &getCrl);
-    ws.start(true);
-
-    // auto client = caservice.CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
+    // auto client = caService->CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
     // std::ofstream file;
     // file.open("test.pfx", std::ios::out | std::ios::binary);
     // file.write(reinterpret_cast<const char*>(client->container.data()), client->container.size());
     // file.close();
+
+    httpserver::webserver ws = httpserver::create_webserver(8080);
+    httpservice::GetCrlEndpoint getCrl(caService);
+    httpservice::GetCrtEndpoint getCrt(caService);
+    ws.register_resource(getCrl.Route(), &getCrl);
+    ws.register_resource(getCrt.Route(), &getCrt);
+    ws.start(true);
+
  } catch (std::exception &ex) {
     cout << ex.what() << endl;
   }

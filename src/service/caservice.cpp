@@ -39,6 +39,7 @@ StoredCertificateAuthorityModelPtr CaService::GetCa(const std::string &serial) {
   result->commonName = model->commonName;
   result->issueDate = model->issueDate;
   result->publicUrl = model->publicUrl;
+  result->certificate = model->certificate;
   return result;
 }
 
@@ -52,6 +53,7 @@ std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
     entry->commonName = model->commonName;
     entry->issueDate = model->issueDate;
     entry->publicUrl = model->publicUrl;
+    entry->certificate = model->certificate;
     result.push_back(entry);
   }
   return result;
@@ -123,10 +125,11 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
   auto caInfo = GetCaInfo(caSerial);
   long number = 1;
   if(crlInfo != nullptr) {
-    number = crlInfo->number ++;
+    number = crlInfo->number + 1;
   }
-  auto revokedCerts = _db->GetRevokedList(caSerial);
+  auto revokedCerts = _db->GetRevokedListOrderByRevokeDateDesc(caSerial);
   CrlRequest req;
+  req.number = number;
   for(auto cert : revokedCerts) {
     req.entries.push_back(CrlEntry{
       .serialNumber = cert->serial,
@@ -134,14 +137,16 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
     });
   }
   auto crl = _crypto->GenerateCrl(req, caInfo);
-  _db->AddCrl(CrlModel{
+  auto dtNow = datetime::utc_now_str();
+  CrlModel model {
     .caSerial = caSerial,
     .number = number,
-    .issueDate = datetime::utc_now_str(),
-    .lastSerial = lastRevoked->serial,
-    .content = crl->content
-  });
-  return crl->content;
+    .issueDate = dtNow,
+    .content = crl.get()->content
+  };
+  if(lastRevoked != nullptr) model.lastSerial = lastRevoked->serial;
+  _db->AddCrl(model);
+  return crl.get()->content;
 }
 
 CaInfo CaService::GetCaInfo(const std::string_view &caSerial) {

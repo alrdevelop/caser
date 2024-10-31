@@ -33,7 +33,7 @@ public:
   
   void MakeCertificateRevoked(const std::string &serial,
                               const std::string &revokeDate)  override;
-  std::vector<CertificateModelPtr> GetRevokedList(const std::string &caSerial) override;
+  std::vector<CertificateModelPtr> GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) override;
   CertificateModelPtr GetLastRevoked(const std::string &caSerial) override;
 
   void AddCrl(const CrlModel &crl) override;

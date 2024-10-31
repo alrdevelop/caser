@@ -63,6 +63,7 @@ namespace contracts {
         std::string_view commonName;
         std::string_view issueDate;
         std::string_view publicUrl;
+        std::vector<std::byte> certificate;
     };
     
 

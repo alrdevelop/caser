@@ -1,5 +1,5 @@
-#ifndef _CASERV_HTTPSERVICE_GET_CRL_H_
-#define _CASERV_HTTPSERVICE_GET_CRL_H_
+#ifndef _CASERV_HTTPSERVICE_GET_CRT_H_
+#define _CASERV_HTTPSERVICE_GET_CRT_H_
 
 #include "./../service/caservice.h"
 #include "./../web/get_endpoint.h"
@@ -9,11 +9,11 @@
 
 namespace httpservice {
 
-class GetCrlEndpoint : public web::ApiGetEndpoint<std::string_view> {
+class GetCrtEndpoint : public web::ApiGetEndpoint<std::string_view> {
 public:
-  GetCrlEndpoint(serivce::CaServicePtr caService);
-  virtual ~GetCrlEndpoint();
-  const char* Route() const override { return "crl/{crlFile}";}
+  GetCrtEndpoint(serivce::CaServicePtr caService);
+  virtual ~GetCrtEndpoint();
+  const char* Route() const override { return "crt/{crtFile}";}
 
 protected:
   std::string_view BuildRequestModel(const httpserver::http_request &req) override;
@@ -25,4 +25,4 @@ private:
 
 } // namespace httpservice
 
-#endif //_CASERV_HTTPSERVICE_GET_CRL_H_
+#endif //_CASERV_HTTPSERVICE_GET_CRT_H_
