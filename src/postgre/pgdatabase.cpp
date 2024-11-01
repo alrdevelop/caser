@@ -1,5 +1,3 @@
-#include "pgdatabase.h"
-#include "./../common/logger.h"
 #include "connection_pool.h"
 #include <cstddef>
 #include <cstdint>
@@ -12,6 +10,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "pgdatabase.h"
+#include "type_spesc/datetime_spec.h"
+#include "./../common/logger.h"
+
 
 using namespace postgre;
 

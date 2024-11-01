@@ -13,10 +13,10 @@ namespace httpservice {
 using namespace nlohmann;
 using namespace nlohmann::literals;
 
-
 class GetCertificateEndpoint : public web::ApiGetEndpoint<std::string_view> {
 public:
-  GetCertificateEndpoint(serivce::CaServicePtr caService) : _caService(caService) {}
+  GetCertificateEndpoint(serivce::CaServicePtr caService)
+      : _caService(caService) {}
   virtual ~GetCertificateEndpoint() = default;
   const char *Route() const override { return "certificate/{serial}"; }
 
@@ -25,24 +25,29 @@ protected:
   BuildRequestModel(const httpserver::http_request &req) override {
     auto pathPieces = req.get_path_pieces();
     auto args = req.get_arg("serial").get_all_values();
-    if(args.empty()) throw std::runtime_error("Invalid request");
+    if (args.empty())
+      throw std::runtime_error("Invalid request");
     return args[0];
   }
 
   HttpResponsePtr Handle(const std::string_view &serial) override {
     auto cert = _caService->GetCertificate(serial.data());
-    if(cert == nullptr) return HttpResponsePtr(new httpserver::string_response("", 404));
+    if (cert == nullptr)
+      return HttpResponsePtr(new httpserver::string_response("", 404));
     json response;
 
     response["serial"] = cert->serial;
     response["thumbprint"] = cert->thumbprint;
     response["caSerial"] = cert->caSerial;
     response["commonName"] = cert->commonName;
-    response["issueDate"] = datetime::to_utcstring(*cert->issueDate);
-    response["revokeDate"] = datetime::to_utcstring(*cert->revokeDate);
+    response["issueDate"] = datetime::to_utcstring(cert->issueDate);
+    if (cert->revokeDate != nullptr)
+      response["revokeDate"] = datetime::to_utcstring(cert->revokeDate);
 
-    return HttpResponsePtr(new httpserver::string_response(response.dump(), 200));
+    return HttpResponsePtr(
+        new httpserver::string_response(response.dump(), 200));
   }
+
 private:
   serivce::CaServicePtr _caService;
 };

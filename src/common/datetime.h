@@ -27,15 +27,22 @@ inline DateTimePtr utc_now() {
   //return std::chrono::system_clock::to_time_t(t);
 }
 
-inline time_t from_utcstring(const std::string &dateTime) {
+inline DateTimePtr from_utcstring(const std::string &dateTime) {
   struct std::tm tm;
   std::istringstream ss(dateTime);
   ss >> std::get_time(&tm, ":%Y-%m-%d %H:%M:%S %Z");
-  return mktime(&tm);
+  auto dt = new DateTime();
+  *dt = mktime(&tm);
+  return DateTimePtr(dt);
 }
 
 inline std::string to_utcstring(const DateTime& dt){
   auto t = std::chrono::system_clock::from_time_t(dt);
+  return std::format("{:%Y-%m-%d %H:%M:%S %Z}", t);
+}
+
+inline std::string to_utcstring(const DateTimePtr& dt){
+  auto t = std::chrono::system_clock::from_time_t(*dt);
   return std::format("{:%Y-%m-%d %H:%M:%S %Z}", t);
 }
 

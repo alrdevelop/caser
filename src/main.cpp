@@ -31,14 +31,13 @@
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
 #include "httpservice/get_certificate.h"
+#include "httpservice/get_crl.h"
 #include "httpservice/get_crt.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
-#include "httpservice/get_crl.h"
 
 using namespace std;
-
 
 contracts::JuridicalPersonCertificateRequest caReq;
 contracts::JuridicalPersonCertificateRequest clientReq;
@@ -83,17 +82,12 @@ int main() {
     clientReq.title = "Предводитель";
     clientReq.algorithm = contracts::AlgorithmEnum::GostR3410_2012_256;
 
-    std::vector<std::string_view> crlDistributionPoints {
-      "http://test.ru/crl.crl"
-    };
+    std::vector<std::string_view> crlDistributionPoints{
+        "http://test.ru/crl.crl"};
 
-    std::vector<std::string_view> ocspEndPoints {
-    };
+    std::vector<std::string_view> ocspEndPoints{};
 
-    std::vector<std::string_view> caEndPoints {
-      "http://test.ru/root.crt"
-    };
-
+    std::vector<std::string_view> caEndPoints{"http://test.ru/root.crt"};
 
     // auto root = provider.GeneratedCACertificate(caReq);
 
@@ -109,29 +103,29 @@ int main() {
     // LOG_INFO(client->serialNumber.data());
     // LOG_INFO(client->thumbprint);
 
-    // auto client = provider.GenerateClientCertitificate(clientReq, issuerCert, issuerKey);
-    // print(client);
-    // auto crl = provider.CreateCRL(issuerCert, issuerKey, std::vector<X509*>{client.first.get()});
+    // auto client = provider.GenerateClientCertitificate(clientReq, issuerCert,
+    // issuerKey); print(client); auto crl = provider.CreateCRL(issuerCert,
+    // issuerKey, std::vector<X509*>{client.first.get()});
 
     // postrgre::PgDatabase db(connString);
 
     contracts::CreateCertificateAuthorityModel createCaModel;
     createCaModel.request = caReq;
-    createCaModel.publicUrl = "http://testca";
-
+    createCaModel.publicUrl = "http://testca:8080";
 
     auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
     base::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
-    base::ICryptoProviderUPtr crypt = std::make_unique<openssl::OpensslCryptoProvider>();
+    base::ICryptoProviderUPtr crypt =
+        std::make_unique<openssl::OpensslCryptoProvider>();
     auto caService = std::make_shared<serivce::CaService>(db, std::move(crypt));
+    // caService->CreateCA(createCaModel);
 
-    // auto res = caService->InvalidateCrl("D8B3F0B524C07A2E6BFD533EF6C23F52");
-
-    // auto client = caService->CreateClientCertificate("D8B3F0B524C07A2E6BFD533EF6C23F52", clientReq);
+    // auto client = caService->CreateClientCertificate(
+    //     "E5767690E57697D703D8F3F21F047FC2", clientReq);
     // std::ofstream file;
     // file.open("test.pfx", std::ios::out | std::ios::binary);
-    // file.write(reinterpret_cast<const char*>(client->container.data()), client->container.size());
-    // file.close();
+    // file.write(reinterpret_cast<const char*>(client->container.data()),
+    // client->container.size()); file.close();
 
     httpserver::webserver ws = httpserver::create_webserver(8080);
     httpservice::GetCrlEndpoint getCrl(caService);
@@ -142,7 +136,7 @@ int main() {
     ws.register_resource(getCertificate.Route(), &getCertificate);
     ws.start(true);
 
- } catch (std::exception &ex) {
+  } catch (std::exception &ex) {
     cout << ex.what() << endl;
   }
   return 0;
