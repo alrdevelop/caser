@@ -1,4 +1,5 @@
 #include "caservice.h"
+#include <cstddef>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -34,13 +35,16 @@ std::vector<CertificateModelPtr> CaService::GetAllCertificates() {
 StoredCertificateAuthorityModelPtr CaService::GetCa(const std::string &serial) {
   auto model = _db->GetCa(serial);
   auto result = std::make_shared<StoredCertificateAuthorityModel>();
-  result->serial = model->serial;
-  result->thumbprint = model->thumbprint;
-  result->commonName = model->commonName;
+  result->serial = std::string_view(model->serial.data());
+  result->thumbprint = std::string_view(model->thumbprint.data());
+  result->commonName = std::string_view(model->commonName.data());
   result->issueDate = model->issueDate;
-  result->publicUrl = model->publicUrl;
-  result->certificate = model->certificate;
+  result->publicUrl = std::string_view(model->publicUrl);
   return result;
+}
+
+std::vector<std::byte> CaService::GetCaCertificateData(const std::string &serial) {
+  return _db->GetCaCertificateData(serial);
 }
 
 std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
@@ -53,7 +57,6 @@ std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
     entry->commonName = model->commonName;
     entry->issueDate = model->issueDate;
     entry->publicUrl = model->publicUrl;
-    entry->certificate = model->certificate;
     result.push_back(entry);
   }
   return result;
@@ -64,10 +67,10 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
   auto caCert = _crypto->GeneratedCACertificate(model.request);
   CertificateAuthorityModel data{.serial = caCert->serialNumber,
                                  .thumbprint = caCert->thumbprint,
-                                 .commonName = model.request.commonName,
+                                 .commonName = model.request.commonName.data(),
                                  .certificate = caCert->certificate,
                                  .privateKey = caCert->privateKey,
-                                 .publicUrl = model.publicUrl};
+                                 .publicUrl = model.publicUrl.data()};
   auto dt = datetime::utc_now();
   data.issueDate = dt;
 
@@ -121,7 +124,6 @@ std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
 std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
   //TODO: optimize db call
   auto crlInfo = _db->GetActualCrl(caSerial);
-  auto lastRevoked = _db->GetLastRevoked(caSerial);
   auto caInfo = GetCaInfo(caSerial);
   long number = 1;
   if(crlInfo != nullptr) {
@@ -132,10 +134,12 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
   req.number = number;
   for(auto cert : revokedCerts) {
     req.entries.push_back(CrlEntry{
-      .serialNumber = cert->serial,
+      .serialNumber = cert->serial.data(),
       .revokationDate = cert->revokeDate
     });
   }
+  std::sort(req.entries.begin(), req.entries.end(), [](const CrlEntry& a, const CrlEntry& b){ return *a.revokationDate <= *b.revokationDate;});
+  std::string serial;
   auto crl = _crypto->GenerateCrl(req, caInfo);
   auto dtNow = datetime::utc_now();
   CrlModel model {
@@ -144,7 +148,11 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
     .issueDate = dtNow,
     .content = crl.get()->content
   };
-  if(lastRevoked != nullptr) model.lastSerial = lastRevoked->serial;
+  if(!req.entries.empty())
+  {
+    serial = req.entries[req.entries.size() - 1].serialNumber;
+    model.lastSerial = serial;
+  }
   _db->AddCrl(model);
   return crl.get()->content;
 }

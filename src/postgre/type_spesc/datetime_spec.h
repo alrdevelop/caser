@@ -28,7 +28,8 @@ template <> struct string_traits<datetime::DateTimePtr> {
   static char *into_buf(char *begin, char *end, datetime::DateTimePtr const &value) {
     if(value == nullptr) return nullptr;
     auto dt = datetime::to_utcstring(value);
-    memccpy(begin, dt.c_str(), '\0', dt.length());
+    auto a= memccpy(begin, dt.c_str(), '\0', dt.length());
+    auto b = begin + dt.length();
     return begin + dt.length();
   }
   

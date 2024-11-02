@@ -269,6 +269,30 @@ std::vector<CertificateAuthorityModelPtr> PgDatabase::GetAllCa() {
   }
 }
 
+std::vector<std::byte> PgDatabase::GetCaCertificateData(const std::string &serial){
+  try {
+    ConnectionScope scope(_connectionPool);
+    auto conn = scope.GetConnection();
+    std::vector<std::byte> result;
+    static auto query =
+        "SELECT \"certificate\" "
+        "FROM ca "
+        "WHERE UPPER(\"serial\") = UPPER($1) "
+        "ORDER BY \"issueDate\" LIMIT 1";
+    pqxx::work tran(*conn);
+
+    for (auto [content] :
+         tran.query<pqxx::bytes>(query, serial)) {
+      auto model = std::make_shared<CertificateAuthorityModel>();
+      result = std::vector<std::byte>(content.begin(), content.end());
+    }
+    tran.commit();
+    return result;
+  } catch (...) {
+    throw;
+  }
+}
+
 void PgDatabase::AddCertificate(const CertificateModel &cert) {
   try {
     ConnectionScope scope(_connectionPool);

@@ -26,6 +26,7 @@ public:
   virtual void AddCA(const CertificateAuthorityModel &ca) = 0;
   virtual CertificateAuthorityModelPtr GetCa(const std::string &serial) = 0;
   virtual std::vector<CertificateAuthorityModelPtr> GetAllCa() = 0;
+  virtual std::vector<std::byte> GetCaCertificateData(const std::string &serial) = 0;
 
   virtual void AddCrl(const CrlModel &crl) = 0;
   virtual CrlModelPtr GetActualCrl(const std::string &caSerial) = 0;

@@ -22,6 +22,7 @@ public:
   std::vector<CertificateModelPtr> GetCertificates(const std::string &caSerial);
   std::vector<CertificateModelPtr> GetAllCertificates();
   StoredCertificateAuthorityModelPtr GetCa(const std::string &serial);
+  std::vector<std::byte> GetCaCertificateData(const std::string &serial);
   std::vector<StoredCertificateAuthorityModelPtr> GetAllCa();
   std::vector<std::byte> GetCrl(const std::string &caSerial);
   std::vector<std::byte> InvalidateCrl(const std::string &caSerial);

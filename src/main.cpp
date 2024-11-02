@@ -30,12 +30,16 @@
 #include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
+#include "httpservice/get_ca.h"
+#include "httpservice/get_ca_certificate.h"
 #include "httpservice/get_certificate.h"
+#include "httpservice/get_certificates.h"
 #include "httpservice/get_crl.h"
 #include "httpservice/get_crt.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
+#include "web/get_endpoint.h"
 
 using namespace std;
 
@@ -131,9 +135,16 @@ int main() {
     httpservice::GetCrlEndpoint getCrl(caService);
     httpservice::GetCrtEndpoint getCrt(caService);
     httpservice::GetCertificateEndpoint getCertificate(caService);
+    httpservice::GetCertificatesEndpoint getCertificates(caService);
+    httpservice::GetCaEndpoint getCa(caService);
+    httpservice::GetCaCertificateEndpoint getCaCert(caService);
+
     ws.register_resource(getCrl.Route(), &getCrl);
     ws.register_resource(getCrt.Route(), &getCrt);
     ws.register_resource(getCertificate.Route(), &getCertificate);
+    ws.register_resource(getCertificates.Route(), &getCertificates);
+    ws.register_resource(getCa.Route(), &getCa);
+    ws.register_resource(getCaCert.Route(), &getCaCert);
     ws.start(true);
 
   } catch (std::exception &ex) {

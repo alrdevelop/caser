@@ -43,7 +43,7 @@ using namespace datetime;
     typedef JuridicalPersonCertificateRequest CertificateRequest;
 
     struct CrlEntry {
-        std::string_view serialNumber;
+        std::string serialNumber;
         DateTimePtr revokationDate;
     };
 

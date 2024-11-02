@@ -22,7 +22,7 @@ std::string_view GetCrtEndpoint::BuildRequestModel(const httpserver::http_reques
 
 HttpResponsePtr GetCrtEndpoint::Handle(const std::string_view &crtFileName) {
     auto caSerial = std::filesystem::path(crtFileName).stem();
-    auto crt = _caService->GetCa(caSerial);
-    if(crt->certificate.empty()) return HttpResponsePtr(new httpserver::string_response("", 404));
-    return HttpResponsePtr(new web::FileResponse(crt->certificate, 200));
+    auto crt = _caService->GetCaCertificateData(caSerial);
+    if(crt.empty()) return HttpResponsePtr(new httpserver::string_response("", 404));
+    return HttpResponsePtr(new web::FileResponse(crt, 200));
 }

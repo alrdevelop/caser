@@ -16,29 +16,29 @@ namespace contracts {
 
 using namespace datetime;
 struct CertificateModel {
-  std::string_view serial;
-  std::string_view thumbprint;
-  std::string_view caSerial;
-  std::string_view commonName;
+  std::string serial;
+  std::string thumbprint;
+  std::string caSerial;
+  std::string commonName;
   DateTimePtr issueDate;
   DateTimePtr revokeDate;
 };
 
 struct CertificateAuthorityModel {
-  std::string_view serial;
-  std::string_view thumbprint;
-  std::string_view commonName;
+  std::string serial;
+  std::string thumbprint;
+  std::string commonName;
   DateTimePtr issueDate;
   std::vector<std::byte> certificate;
   std::vector<std::byte> privateKey;
-  std::string_view publicUrl;
+  std::string publicUrl;
 };
 
 struct CrlModel {
-  std::string_view caSerial;
+  std::string caSerial;
   long number;
   DateTimePtr issueDate;
-  std::string_view lastSerial;
+  std::string lastSerial;
   std::vector<std::byte> content;
 };
 
@@ -61,7 +61,6 @@ struct StoredCertificateAuthorityModel {
   std::string_view commonName;
   DateTimePtr issueDate;
   std::string_view publicUrl;
-  std::vector<std::byte> certificate;
 };
 
 using CreateCertificateAuthorityModelPtr =

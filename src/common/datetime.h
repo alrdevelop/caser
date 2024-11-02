@@ -30,7 +30,7 @@ inline DateTimePtr utc_now() {
 inline DateTimePtr from_utcstring(const std::string &dateTime) {
   struct std::tm tm;
   std::istringstream ss(dateTime);
-  ss >> std::get_time(&tm, ":%Y-%m-%d %H:%M:%S %Z");
+  ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S %Z");
   auto dt = new DateTime();
   *dt = mktime(&tm);
   return DateTimePtr(dt);

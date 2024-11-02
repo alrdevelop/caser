@@ -29,7 +29,7 @@ public:
   std::vector<CertificateModelPtr> GetAllCertificates() override;
   CertificateAuthorityModelPtr GetCa(const std::string &serial) override;
   std::vector<CertificateAuthorityModelPtr> GetAllCa() override;
-
+  std::vector<std::byte> GetCaCertificateData(const std::string &serial) override;
   void AddCertificate(const CertificateModel &cert) override;
   void AddCA(const CertificateAuthorityModel &ca) override;
 

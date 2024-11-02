@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "./../common/datetime.h"
 
@@ -140,29 +141,11 @@ CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
   ASN1_INTEGER_set(crlNumber, req.number);
   OSSL_CHECK(X509_CRL_add1_ext_i2d(crl, NID_crl_number, crlNumber, 0, 0));
   ASN1_INTEGER_free(crlNumber);
-
-  for(auto e : req.entries) {
-    if(e.serialNumber.empty()) continue;
-
-    // auto revoked = X509_REVOKED_new();
-
-    // BIGNUM *bn{nullptr};
-    // BN_hex2bn(&bn, e.serialNumber.data());
-    // auto serial = BN_to_ASN1_INTEGER(bn, nullptr);
-    // OSSL_CHECK(X509_REVOKED_set_serialNumber(revoked, serial));
-    // ASN1_INTEGER_free(serial);
-
-    // auto revokeDate = ASN1_UTCTIME_new();
-    // ASN1_UTCTIME_adj(lasUpdate, datetime::from_utcstring(e.revokationDate.data()), 0, 0);
-    // OSSL_CHECK(X509_REVOKED_set_revocationDate(revoked, revokeDate));
-    // ASN1_UTCTIME_free(revokeDate);
-
-    // auto rtmp = ASN1_ENUMERATED_new();
-    // ASN1_ENUMERATED_set(rtmp, 3 /*REV_KEY_COMPROMISE*/);
-    // OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
-    // ASN1_ENUMERATED_free(rtmp);
-    auto revoked = CreateRevokedEntry(e.serialNumber, *e.revokationDate);
-    OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked.get()));
+  for (auto e : req.entries) {
+    if (!e.serialNumber.empty()) {
+      auto revoked = CreateRevokedEntry(e.serialNumber.data(), *e.revokationDate);
+      OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
+    }
   }
   OSSL_CHECK(X509_CRL_sort(crl));
   // Init context
@@ -190,14 +173,11 @@ CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
 
   const EVP_MD *md = EVP_get_digestbynid(GetMDId(issuerKp));
   OSSL_CHECK(X509_CRL_sign(crl, issuerKp, md));
-  
+
   X509_free(issuerCert);
   EVP_PKEY_free(issuerKp);
 
-  auto result = new Crl{
-    .content = openssl::get_crl_data(crl)
-  };
-
+  auto result = new Crl{.content = openssl::get_crl_data(crl)};
   X509_CRL_free(crl);
   return std::move(CrlUPtr(result));
 };
@@ -363,7 +343,9 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
   }
 }
 
-OpensslCryptoProvider::X509RevokedUptr OpensslCryptoProvider::CreateRevokedEntry(const std::string_view &serial, const DateTime &revokeDate) {
+X509_REVOKED*
+OpensslCryptoProvider::CreateRevokedEntry(const std::string_view serial,
+                                          const DateTime &revokeDate) {
   auto revoked = X509_REVOKED_new();
 
   BIGNUM *bn{nullptr};
@@ -382,5 +364,5 @@ OpensslCryptoProvider::X509RevokedUptr OpensslCryptoProvider::CreateRevokedEntry
   OSSL_CHECK(X509_REVOKED_add1_ext_i2d(revoked, NID_crl_reason, rtmp, 0, 0));
   ASN1_ENUMERATED_free(rtmp);
 
-  return std::move(OpensslCryptoProvider::X509RevokedUptr(revoked, X509_REVOKED_free));
+  return revoked;
 }

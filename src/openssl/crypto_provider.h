@@ -70,11 +70,10 @@ private:
   using EvpPkeyUPtr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
   using X509Uptr = std::unique_ptr<X509, decltype(&::X509_free)>;
   using X509CrlUptr = std::unique_ptr<X509_CRL, decltype(&::X509_CRL_free)>;
-  using X509RevokedUptr = std::unique_ptr<X509_REVOKED, decltype(&::X509_REVOKED_free)>;
 
   EvpPkeyUPtr GenerateKeyPair(const PkeyParams &params);
   CertificateUPtr GenerateX509Certitificate(const AlgorithmEnum &algorithm,const std::vector<std::pair<std::string_view, std::string_view>> &subject, const long &ttlInDays, const CaInfo* caInfo);
-  X509RevokedUptr CreateRevokedEntry(const std::string_view &serial, const DateTime &revokeDate);
+  X509_REVOKED* CreateRevokedEntry(const std::string_view serial, const DateTime &revokeDate);
 };
 } // namespace openssl
 
