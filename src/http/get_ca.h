@@ -1,24 +1,23 @@
-#ifndef _CASERV_HTTPSERVICE_GET_CERTIFICATES_H_
-#define _CASERV_HTTPSERVICE_GET_CERTIFICATES_H_
+#ifndef _CASERV_HTTP_GET_CA_H_
+#define _CASERV_HTTP_GET_CA_H_
 
 #include "./../service/caservice.h"
-#include "./../web/get_endpoint.h"
-#include "./../json/type_spec/certificate_model_spec.h"
+#include "base/get_endpoint.h"
 
 #include <httpserver.hpp>
 #include <string_view>
 
-namespace httpservice {
+namespace http {
 
 using namespace nlohmann;
 using namespace nlohmann::literals;
 
-class GetCertificatesEndpoint : public web::ApiGetEndpoint<std::string_view> {
+class GetCaEndpoint : public ApiGetEndpoint<std::string_view> {
 public:
-  GetCertificatesEndpoint(serivce::CaServicePtr caService)
+  GetCaEndpoint(serivce::CaServicePtr caService)
       : _caService(caService) {}
-  virtual ~GetCertificatesEndpoint() = default;
-  const char *Route() const override { return "ca/{caSerial}/certificates"; }
+  virtual ~GetCaEndpoint() = default;
+  const char *Route() const override { return "ca/{caSerial}"; }
 
 protected:
   std::string_view
@@ -31,9 +30,11 @@ protected:
   }
 
   HttpResponsePtr Handle(const std::string_view &caSerial) override {
-    auto certs = _caService->GetCertificates(caSerial.data());
-    json response = certs;
+    auto ca = _caService->GetCa(caSerial.data());
 
+    if(ca == nullptr) return HttpResponsePtr(new httpserver::string_response("", 404));
+
+    json response = ca;
     return HttpResponsePtr(
         new httpserver::string_response(response.dump(), 200));
   }
@@ -44,4 +45,4 @@ private:
 
 } // namespace httpservice
 
-#endif //_CASERV_HTTPSERVICE_GET_CERTIFICATES_H_
+#endif //_CASERV_HTTP_GET_CA_H_

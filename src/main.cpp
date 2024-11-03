@@ -1,14 +1,10 @@
 ﻿// caserver.cpp : Defines the entry point for the application.
 //
 
-#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-#include <format>
-#include <fstream>
 #include <httpserver.hpp>
-#include <ios>
 #include <iostream>
 #include <memory>
 #include <openssl/bio.h>
@@ -26,20 +22,17 @@
 #include <vector>
 
 #include "base/icrypto_provider.h"
-#include "base/idatabase.h"
-#include "contracts/certificate_model.h"
 #include "contracts/certificate_request.h"
 #include "contracts/enums.h"
-#include "httpservice/get_ca.h"
-#include "httpservice/get_ca_certificate.h"
-#include "httpservice/get_certificate.h"
-#include "httpservice/get_certificates.h"
-#include "httpservice/get_crl.h"
-#include "httpservice/get_crt.h"
+#include "http/get_ca.h"
+#include "http/get_ca_certificate.h"
+#include "http/get_certificate.h"
+#include "http/get_certificates.h"
+#include "http/get_crl.h"
+#include "http/get_crt.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
-#include "web/get_endpoint.h"
 
 using namespace std;
 
@@ -113,12 +106,21 @@ int main() {
 
     // postrgre::PgDatabase db(connString);
 
-    contracts::CreateCertificateAuthorityModel createCaModel;
-    createCaModel.request = caReq;
+    service::models::CreateCertificateAuthorityModel createCaModel;
+    createCaModel.commonName = "ООО Очень Тестовый УЦ";
+    createCaModel.country = "RU";
+    createCaModel.stateOrProvinceName = "78 г.Санкт-Петербург";
+    createCaModel.localityName = "Санкт-Петербург";
+    createCaModel.streetAddress = "ул. Большая Морская";
+    createCaModel.emailAddress = "test@testemail.ru";
+    createCaModel.innLe = "1234567890";
+    createCaModel.ogrn = "1234567890123";
+    createCaModel.organizationName = "ООО Очень Тестовый УЦ";
+    createCaModel.algorithm = contracts::AlgorithmEnum::GostR3410_2012_512;
     createCaModel.publicUrl = "http://testca:8080";
 
     auto connString = "postgresql://admin:admin@127.0.0.1:5432/postgres";
-    base::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
+    db::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
     base::ICryptoProviderUPtr crypt =
         std::make_unique<openssl::OpensslCryptoProvider>();
     auto caService = std::make_shared<serivce::CaService>(db, std::move(crypt));
@@ -132,12 +134,12 @@ int main() {
     // client->container.size()); file.close();
 
     httpserver::webserver ws = httpserver::create_webserver(8080);
-    httpservice::GetCrlEndpoint getCrl(caService);
-    httpservice::GetCrtEndpoint getCrt(caService);
-    httpservice::GetCertificateEndpoint getCertificate(caService);
-    httpservice::GetCertificatesEndpoint getCertificates(caService);
-    httpservice::GetCaEndpoint getCa(caService);
-    httpservice::GetCaCertificateEndpoint getCaCert(caService);
+    http::GetCrlEndpoint getCrl(caService);
+    http::GetCrtEndpoint getCrt(caService);
+    http::GetCertificateEndpoint getCertificate(caService);
+    http::GetCertificatesEndpoint getCertificates(caService);
+    http::GetCaEndpoint getCa(caService);
+    http::GetCaCertificateEndpoint getCaCert(caService);
 
     ws.register_resource(getCrl.Route(), &getCrl);
     ws.register_resource(getCrt.Route(), &getCrt);

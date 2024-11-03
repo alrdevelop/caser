@@ -1,18 +1,16 @@
-#ifndef _CASERV_BASE_DATABASE_H_
-#define _CASERV_BASE_DATABASE_H_
+#ifndef _CASERV_DB_IDATABASE_H_
+#define _CASERV_DB_IDATABASE_H_
 
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
-#include "./../common/appsettings.h"
-#include "./../contracts/certificate_model.h"
+#include "models/models.h"
 
-namespace base {
+namespace db {
 
-using namespace contracts;
+using namespace models;
 
 class IDataBase {
 public:
@@ -40,6 +38,6 @@ public:
 
 using IDataBasePtr = std::shared_ptr<IDataBase>;
 
-} // namespace base
+} // namespace db
 
-#endif //_CASERV_BASE_DATABASE_H_
+#endif //_CASERV_DB_IDATABASE_H_

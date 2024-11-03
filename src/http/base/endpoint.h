@@ -1,21 +1,22 @@
-#ifndef _CASERV_WEB_ENDPOINT_H_
-#define _CASERV_WEB_ENDPOINT_H_
+#ifndef _CASERV_HTTP_BASE_ENDPOINT_H_
+#define _CASERV_HTTP_BASE_ENDPOINT_H_
 
 #include <httpserver.hpp>
 #include <memory>
 
 using HttpResponsePtr = std::shared_ptr<httpserver::http_response>;
 
-namespace web {
+namespace http {
 template <typename TRequest>
 class ApiEndpoint : public httpserver::http_resource {
 public:
   virtual ~ApiEndpoint() = default;
-  virtual const char* Route() const = 0;
+  virtual const char *Route() const = 0;
+
 protected:
   virtual TRequest BuildRequestModel(const httpserver::http_request &req) = 0;
   virtual HttpResponsePtr Handle(const TRequest &model) = 0;
 };
-} // namespace web
+} // namespace http
 
-#endif //_CASERV_WEB_ENDPOINT_H_
+#endif //_CASERV_HTTP_BASE_ENDPOINT_H_

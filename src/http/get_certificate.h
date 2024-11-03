@@ -1,19 +1,18 @@
-#ifndef _CASERV_HTTPSERVICE_GET_CERTIFICATE_H_
-#define _CASERV_HTTPSERVICE_GET_CERTIFICATE_H_
+#ifndef _CASERV_HTTP_GET_CERTIFICATE_H_
+#define _CASERV_HTTP_GET_CERTIFICATE_H_
 
 #include "./../service/caservice.h"
-#include "./../web/get_endpoint.h"
-#include "./../json/type_spec/certificate_model_spec.h"
+#include "base/get_endpoint.h"
 
 #include <httpserver.hpp>
 #include <string_view>
 
-namespace httpservice {
+namespace http {
 
 using namespace nlohmann;
 using namespace nlohmann::literals;
 
-class GetCertificateEndpoint : public web::ApiGetEndpoint<std::string_view> {
+class GetCertificateEndpoint : public ApiGetEndpoint<std::string_view> {
 public:
   GetCertificateEndpoint(serivce::CaServicePtr caService)
       : _caService(caService) {}
@@ -44,6 +43,6 @@ private:
   serivce::CaServicePtr _caService;
 };
 
-} // namespace httpservice
+} // namespace http
 
-#endif //_CASERV_HTTPSERVICE_GET_CERTIFICATE_H_
+#endif //_CASERV_HTTP_GET_CERTIFICATE_H_

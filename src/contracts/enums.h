@@ -33,6 +33,12 @@ namespace contracts
         TimeStamping,
         OCSPSigning,
     };
+
+    enum class SujectTypeEnum {
+        PhysicalPerson = 0,
+        IndividualEntrepreneur = 1,
+        JuridicalPerson = 2,
+    };
 }
 
 #endif //_CASERV_CONTRACTS_ENUMS_H_

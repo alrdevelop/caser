@@ -1,5 +1,5 @@
 #include "get_crt.h"
-#include "./../web/file_response.h"
+#include "base/file_response.h"
 #include <filesystem>
 #include <httpserver.hpp>
 #include <microhttpd.h>
@@ -7,7 +7,7 @@
 #include <string_view>
 
 
-using namespace httpservice;
+using namespace http;
 
 GetCrtEndpoint::GetCrtEndpoint(serivce::CaServicePtr caService) : _caService(caService) {}
 
@@ -24,5 +24,5 @@ HttpResponsePtr GetCrtEndpoint::Handle(const std::string_view &crtFileName) {
     auto caSerial = std::filesystem::path(crtFileName).stem();
     auto crt = _caService->GetCaCertificateData(caSerial);
     if(crt.empty()) return HttpResponsePtr(new httpserver::string_response("", 404));
-    return HttpResponsePtr(new web::FileResponse(crt, 200));
+    return HttpResponsePtr(new FileResponse(crt, 200));
 }

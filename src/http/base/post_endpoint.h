@@ -1,12 +1,13 @@
-#ifndef _CASERV_WEB_POST_ENDPOINT_H_
-#define _CASERV_WEB_POST_ENDPOINT_H_
+#ifndef _CASERV_HTTP_BASE_POST_ENDPOINT_H_
+#define _CASERV_HTTP_BASE_POST_ENDPOINT_H_
 
-#include "./../common/logger.h"
 #include "endpoint.h"
 #include <httpserver.hpp>
 
+#include "./../../common/logger.h"
 
-namespace web {
+
+namespace http {
 
 template <typename TRequest> class ApiPostEndpoint : public ApiEndpoint<TRequest> {
 public:
@@ -21,6 +22,6 @@ public:
   }
 };
 
-} // web
+} // http
 
-#endif //_CASERV_WEB_POST_ENDPOINT_H_
+#endif //_CASERV_HTTP_BASE_POST_ENDPOINT_H_

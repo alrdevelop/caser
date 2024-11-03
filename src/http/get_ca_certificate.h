@@ -1,20 +1,19 @@
-#ifndef _CASERV_HTTPSERVICE_GET_CA_CERTIFICATE_H_
-#define _CASERV_HTTPSERVICE_GET_CA_CERTIFICATE_H_
+#ifndef _CASERV_HTTP_GET_CA_CERTIFICATE_H_
+#define _CASERV_HTTP_GET_CA_CERTIFICATE_H_
 
 #include "./../service/caservice.h"
-#include "./../web/get_endpoint.h"
-#include "./../web/file_response.h"
-#include "./../json/type_spec/certificate_model_spec.h"
+#include "base/file_response.h"
+#include "base/get_endpoint.h"
 
 #include <httpserver.hpp>
 #include <string_view>
 
-namespace httpservice {
+namespace http {
 
 using namespace nlohmann;
 using namespace nlohmann::literals;
 
-class GetCaCertificateEndpoint : public web::ApiGetEndpoint<std::string_view> {
+class GetCaCertificateEndpoint : public ApiGetEndpoint<std::string_view> {
 public:
   GetCaCertificateEndpoint(serivce::CaServicePtr caService)
       : _caService(caService) {}
@@ -33,14 +32,15 @@ protected:
 
   HttpResponsePtr Handle(const std::string_view &caSerial) override {
     auto crt = _caService->GetCaCertificateData(caSerial.data());
-    if(crt.empty()) return HttpResponsePtr(new httpserver::string_response("", 404));
-    return HttpResponsePtr(new web::FileResponse(crt, 200));
+    if (crt.empty())
+      return HttpResponsePtr(new httpserver::string_response("", 404));
+    return HttpResponsePtr(new FileResponse(crt, 200));
   }
 
 private:
   serivce::CaServicePtr _caService;
 };
 
-} // namespace httpservice
+} // namespace http
 
-#endif //_CASERV_HTTPSERVICE_GET_CA_CERTIFICATE_H_
+#endif //_CASERV_HTTP_GET_CA_CERTIFICATE_H_

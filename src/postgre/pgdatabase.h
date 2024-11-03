@@ -1,7 +1,7 @@
 #ifndef _CASERV_POSTGRE_PGDATABASE_H_
 #define _CASERV_POSTGRE_PGDATABASE_H_
 
-#include "./../base/idatabase.h"
+#include "./../db/idatabase.h"
 #include "./../common/appsettings.h"
 #include <cstring>
 #include <memory>
@@ -16,9 +16,10 @@
 #include "connection_pool.h"
 namespace postgre {
 
-using namespace contracts;
+using namespace db;
+using namespace db::models;
 
-class PgDatabase : public base::IDataBase {
+class PgDatabase : public IDataBase {
 public:
   PgDatabase(const std::string_view &connectionString);
   ~PgDatabase();
