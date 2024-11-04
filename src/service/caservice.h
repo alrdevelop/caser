@@ -31,7 +31,7 @@ public:
   std::vector<std::byte> InvalidateCrl(const std::string &caSerial);
 
   StoredCertificateAuthorityModelPtr CreateCA(const CreateCertificateAuthorityModel& model);
-  PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IssueCertificateModelPtr& model);
+  PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IssueCertificateModel& model);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const JuridicalPersonCertificateRequest& req);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IndividualEntrepreneurCertificateRequest& req);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const PhysicalPersonCertificateRequest& req);

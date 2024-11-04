@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/socket.h>
 #include <utility>
 #include <vector>
 
@@ -16,6 +17,39 @@
 #include "models/models.h"
 
 using namespace serivce;
+
+
+const PhysicalPersonCertificateRequest& Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src){
+  dst.algorithm = src.algorithm;
+  dst.commonName = src.commonName;
+  dst.country = src.country;
+  dst.localityName = src.localityName;
+  dst.stateOrProvinceName = src.stateOrProvinceName;
+  dst.streetAddress = src.streetAddress;
+  dst.emailAddress = src.emailAddress;
+  dst.ttlInDays = src.ttlInDays;
+  dst.inn = src.inn;
+  dst.snils = src.snils;
+  dst.givenName = src.givenName;
+  dst.surname = src.surname;
+  return dst;
+}
+
+const IndividualEntrepreneurCertificateRequest& Map(IndividualEntrepreneurCertificateRequest &dst, const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest&>(dst), src);
+  dst.ogrnip = src.ogrnip;
+  return dst;
+}
+
+const JuridicalPersonCertificateRequest& Map(JuridicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest&>(dst), src);
+  dst.innLe = src.innLe;
+  dst.ogrn = src.ogrn;
+  dst.organizationName = src.organizationName;
+  dst.organizationUnitName = src.organizationUnitName;
+  dst.title = src.title;
+  return dst;
+}
 
 CaService::CaService(IDataBasePtr db, ICryptoProviderUPtr crypto) : _db(db) {
   _crypto = std::move(crypto);
@@ -130,31 +164,31 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
 
 PKCS12ContainerUPtr
 CaService::CreateClientCertificate(const std::string_view &caSerial,
-                                   const IssueCertificateModelPtr &model) {
+                                   const IssueCertificateModel &model) {
   auto caInfo = GetCaInfo(caSerial);
   PKCS12ContainerUPtr container{nullptr};
 
-  switch (model->subjectType) {
-  case contracts::SujectTypeEnum::PhysicalPerson:
-    container = _crypto->GenerateClientCertitificate(
-        PhysicalPersonCertificateRequest{}, caInfo);
-    break;
-  case contracts::SujectTypeEnum::IndividualEntrepreneur:
-    container = _crypto->GenerateClientCertitificate(
-        IndividualEntrepreneurCertificateRequest{}, caInfo);
-    break;
-  case contracts::SujectTypeEnum::JuridicalPerson:
-    container = _crypto->GenerateClientCertitificate(
-        JuridicalPersonCertificateRequest{}, caInfo);
-    break;
-  default:
+  if(model.subjectType == SujectTypeEnum::PhysicalPerson) {
+    auto req = new PhysicalPersonCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    delete req;
+  } else if ( model.subjectType == SujectTypeEnum::IndividualEntrepreneur) {
+    auto req = new IndividualEntrepreneurCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    delete req;
+  } else if (model.subjectType == SujectTypeEnum::JuridicalPerson) {
+    auto req = new JuridicalPersonCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    delete req;
+  } else {
     LOG_ERROR("SubjectTypeEnum value: {} not supported.",
-              (int)model->subjectType);
+              (int)model.subjectType);
     throw std::runtime_error("Invalid SubjectTypeEnum value");
   }
+
   if (container == nullptr)
     throw std::runtime_error("Container is null");
-  SaveClientCertificate(caSerial, model->commonName, container);
+  SaveClientCertificate(caSerial, model.commonName, container);
   return std::move(container);
 }
 

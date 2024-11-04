@@ -2,6 +2,7 @@
 #define _CASERV_HTTP_BASE_POST_ENDPOINT_H_
 
 #include "endpoint.h"
+#include <exception>
 #include <httpserver.hpp>
 
 #include "./../../common/logger.h"
@@ -15,6 +16,9 @@ public:
     try {
       auto model = this->BuildRequestModel(req);
       return this->Handle(model);
+    } catch (const std::exception& ex) {
+      LOG_ERROR("{}", ex.what());
+      return HttpResponsePtr(new httpserver::string_response("", 500));
     } catch (...) {
       LOG_ERROR("Unhandled exception");
       return HttpResponsePtr(new httpserver::string_response("", 500));
