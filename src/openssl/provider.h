@@ -179,7 +179,7 @@ public:
     }
   }
 
-  X509CrlUptr CreateCRL(X509 *issuerCert, EVP_PKEY *issuerKp,
+  X509CrlUptr CreateCRL(X509 *issuerCert, EVP_PKEY *issuerKp, DateTimePtr issueDate, DateTimePtr expireDate,
                         const std::vector<X509 *> certs) {
     auto *asn1Tm = ASN1_UTCTIME_new();
     time_t now = time(0);

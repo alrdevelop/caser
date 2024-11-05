@@ -1,18 +1,16 @@
-#ifndef _CASERV_BASE_DATABASE_H_
-#define _CASERV_BASE_DATABASE_H_
+#ifndef _CASERV_DB_IDATABASE_H_
+#define _CASERV_DB_IDATABASE_H_
 
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
-#include "./../common/appsettings.h"
-#include "./../contracts/certificate_model.h"
+#include "models/models.h"
 
-namespace base {
+namespace db {
 
-using namespace contracts;
+using namespace models;
 
 class IDataBase {
 public:
@@ -26,6 +24,7 @@ public:
   virtual void AddCA(const CertificateAuthorityModel &ca) = 0;
   virtual CertificateAuthorityModelPtr GetCa(const std::string &serial) = 0;
   virtual std::vector<CertificateAuthorityModelPtr> GetAllCa() = 0;
+  virtual std::vector<std::byte> GetCaCertificateData(const std::string &serial) = 0;
 
   virtual void AddCrl(const CrlModel &crl) = 0;
   virtual CrlModelPtr GetActualCrl(const std::string &caSerial) = 0;
@@ -39,6 +38,6 @@ public:
 
 using IDataBasePtr = std::shared_ptr<IDataBase>;
 
-} // namespace base
+} // namespace db
 
-#endif //_CASERV_BASE_DATABASE_H_
+#endif //_CASERV_DB_IDATABASE_H_

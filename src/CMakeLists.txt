@@ -21,8 +21,8 @@ add_executable (caserver
   "postgre/pgdatabase.cpp"
   "openssl/crypto_provider.cpp"
   "service/caservice.cpp"
-  "httpservice/get_crl.cpp"
-  "httpservice/get_crt.cpp"
+  "http/get_crl.cpp"
+  "http/get_crt.cpp"
 )
 
 target_link_libraries(caserver PRIVATE OpenSSL::SSL OpenSSL::Crypto spdlog::spdlog spdlog::spdlog_header_only pqxx pq httpserver microhttpd)

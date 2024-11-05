@@ -1,5 +1,6 @@
 #include "get_crl.h"
-#include "./../web/file_response.h"
+#include "base/file_response.h"
+
 #include <filesystem>
 #include <httpserver.hpp>
 #include <microhttpd.h>
@@ -7,7 +8,7 @@
 #include <string_view>
 
 
-using namespace httpservice;
+using namespace http;
 
 GetCrlEndpoint::GetCrlEndpoint(serivce::CaServicePtr caService) : _caService(caService) {}
 
@@ -24,5 +25,5 @@ HttpResponsePtr GetCrlEndpoint::Handle(const std::string_view &crlFileName) {
     auto caSerial = std::filesystem::path(crlFileName).stem();
     auto crl = _caService->GetCrl(caSerial);
     if(crl.empty()) return HttpResponsePtr(new httpserver::string_response("", 404));
-    return HttpResponsePtr(new web::FileResponse(crl, 200));
+    return HttpResponsePtr(new FileResponse(crl, 200));
 }

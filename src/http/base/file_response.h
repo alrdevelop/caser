@@ -1,5 +1,5 @@
-#ifndef _CASERV_WEB_FILERESPONSE_H_
-#define _CASERV_WEB_FILERESPONSE_H_
+#ifndef _CASERV_HTTP_BASE__FILERESPONSE_H_
+#define _CASERV_HTTP_BASE__FILERESPONSE_H_
 
 #include <cstddef>
 #include <httpserver.hpp>
@@ -11,7 +11,7 @@
 
 struct MHD_Response;
 
-namespace web {
+namespace http {
 
 class FileResponse : public httpserver::http_response {
 public:
@@ -36,13 +36,13 @@ public:
       return MHD_create_response_from_buffer(0, nullptr,
                                              MHD_RESPMEM_PERSISTENT);
     return MHD_create_response_from_buffer(_content.size(), _content.data(),
-                                           MHD_RESPMEM_PERSISTENT);
+                                           MHD_RESPMEM_MUST_COPY);
   }
 
 private:
   std::vector<std::byte> _content;
 };
 
-} // namespace web
+} // namespace http
 
-#endif //_CASERV_WEB_FILERESPONSE_H_
+#endif //_CASERV_HTTP_BASE__FILERESPONSE_H_

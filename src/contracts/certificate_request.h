@@ -2,13 +2,14 @@
 #define _CASERV_CONTRACTS_CERTIFICATE_REQUEST_H_
 
 #include "enums.h"
+#include "./../common/datetime.h"
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace contracts {
-
+using namespace datetime;
     struct CertificateRequestBase {
         AlgorithmEnum algorithm{AlgorithmEnum::GostR3410_2012_256};
         std::string_view commonName;
@@ -42,13 +43,15 @@ namespace contracts {
     typedef JuridicalPersonCertificateRequest CertificateRequest;
 
     struct CrlEntry {
-        std::string_view serialNumber;
-        std::string_view revokationDate;
+        std::string serialNumber;
+        DateTimePtr revokationDate;
     };
 
     struct CrlRequest {
         long number;
         std::vector<CrlEntry> entries;
+        DateTimePtr issueDate;
+        DateTimePtr expireDate;
     };
 
 } // namespace contracts

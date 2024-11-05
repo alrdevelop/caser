@@ -11,10 +11,10 @@ public:
   AppSettings() = default;
   ~AppSettings() = default;
 
-  std::string_view GetParam(const std::string &name,
+  const std::string GetParam(const std::string &name,
                        const std::string &defaultValue) const {
     if (const char *envp = std::getenv(name.c_str()))
-      return std::string_view(envp);
+      return envp;
     return defaultValue;
   }
 };

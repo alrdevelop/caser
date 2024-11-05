@@ -1,15 +1,15 @@
-#ifndef _CASERV_HTTPSERVICE_GET_CRL_H_
-#define _CASERV_HTTPSERVICE_GET_CRL_H_
+#ifndef _CASERV_HTTP_GET_CRL_H_
+#define _CASERV_HTTP_GET_CRL_H_
 
 #include "./../service/caservice.h"
-#include "./../web/get_endpoint.h"
+#include "base/get_endpoint.h"
 
 #include <httpserver.hpp>
 #include <string_view>
 
-namespace httpservice {
+namespace http {
 
-class GetCrlEndpoint : public web::ApiGetEndpoint<std::string_view> {
+class GetCrlEndpoint : public ApiGetEndpoint<std::string_view> {
 public:
   GetCrlEndpoint(serivce::CaServicePtr caService);
   virtual ~GetCrlEndpoint();
@@ -23,6 +23,6 @@ private:
   serivce::CaServicePtr _caService;
 };
 
-} // namespace httpservice
+} // namespace http
 
-#endif //_CASERV_HTTPSERVICE_GET_CRL_H_
+#endif //_CASERV_HTTP_GET_CRL_H_

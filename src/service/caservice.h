@@ -2,7 +2,8 @@
 #define _CASERV_SERVICE_CASERVICE_H_
 
 #include "./../base/icrypto_provider.h"
-#include "./../base/idatabase.h"
+#include "./../db/idatabase.h"
+#include "models/models.h"
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -12,21 +13,25 @@
 namespace serivce {
 
 using namespace base;
-
+using namespace service::models;
+using namespace db::models;
+using namespace db;
 class CaService {
 public:
   CaService(IDataBasePtr db, ICryptoProviderUPtr crypto);
   ~CaService();
 
-  CertificateModelPtr GetCertificate(const std::string &serial);
-  std::vector<CertificateModelPtr> GetCertificates(const std::string &caSerial);
-  std::vector<CertificateModelPtr> GetAllCertificates();
+  StoredCertificateModelPtr GetCertificate(const std::string &serial);
+  std::vector<StoredCertificateModelPtr> GetCertificates(const std::string &caSerial);
+  std::vector<StoredCertificateModelPtr> GetAllCertificates();
   StoredCertificateAuthorityModelPtr GetCa(const std::string &serial);
+  std::vector<std::byte> GetCaCertificateData(const std::string &serial);
   std::vector<StoredCertificateAuthorityModelPtr> GetAllCa();
   std::vector<std::byte> GetCrl(const std::string &caSerial);
   std::vector<std::byte> InvalidateCrl(const std::string &caSerial);
 
   StoredCertificateAuthorityModelPtr CreateCA(const CreateCertificateAuthorityModel& model);
+  PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IssueCertificateModel& model);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const JuridicalPersonCertificateRequest& req);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IndividualEntrepreneurCertificateRequest& req);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const PhysicalPersonCertificateRequest& req);

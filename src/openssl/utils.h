@@ -17,6 +17,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace openssl {
@@ -158,12 +159,12 @@ inline int GetMDId(EVP_PKEY *pKey) {
 /*
   Add subject entry
 */
-inline void NameAddEntry(X509_NAME *name, const char *field,
-                         const char *val, int type = MBSTRING_UTF8) {
-  if (val == nullptr)
+inline void NameAddEntry(X509_NAME *name, const std::string_view field,
+                         const std::string_view val, int type = MBSTRING_UTF8) {
+  if (val.empty())
     return;
   OSSL_CHECK(X509_NAME_add_entry_by_txt(
-      name, field, type, (unsigned char *)val, -1, -1, 0));
+      name, field.data(), type, (unsigned char *)val.data(), -1, -1, 0));
 }
 
 inline std::string get_serial_hex(X509* cert) {

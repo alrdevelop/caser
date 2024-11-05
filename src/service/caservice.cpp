@@ -1,4 +1,5 @@
 #include "caservice.h"
+#include <cstddef>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -7,12 +8,51 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/socket.h>
 #include <utility>
 #include <vector>
 
 #include "./../common/datetime.h"
+#include "./../common/logger.h"
+#include "models/models.h"
 
 using namespace serivce;
+
+const PhysicalPersonCertificateRequest &
+Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
+  dst.algorithm = src.algorithm;
+  dst.commonName = src.commonName;
+  dst.country = src.country;
+  dst.localityName = src.localityName;
+  dst.stateOrProvinceName = src.stateOrProvinceName;
+  dst.streetAddress = src.streetAddress;
+  dst.emailAddress = src.emailAddress;
+  dst.ttlInDays = src.ttlInDays;
+  dst.inn = src.inn;
+  dst.snils = src.snils;
+  dst.givenName = src.givenName;
+  dst.surname = src.surname;
+  return dst;
+}
+
+const IndividualEntrepreneurCertificateRequest &
+Map(IndividualEntrepreneurCertificateRequest &dst,
+    const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest &>(dst), src);
+  dst.ogrnip = src.ogrnip;
+  return dst;
+}
+
+const JuridicalPersonCertificateRequest &
+Map(JuridicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest &>(dst), src);
+  dst.innLe = src.innLe;
+  dst.ogrn = src.ogrn;
+  dst.organizationName = src.organizationName;
+  dst.organizationUnitName = src.organizationUnitName;
+  dst.title = src.title;
+  return dst;
+}
 
 CaService::CaService(IDataBasePtr db, ICryptoProviderUPtr crypto) : _db(db) {
   _crypto = std::move(crypto);
@@ -20,27 +60,66 @@ CaService::CaService(IDataBasePtr db, ICryptoProviderUPtr crypto) : _db(db) {
 
 CaService::~CaService() {}
 
-CertificateModelPtr CaService::GetCertificate(const std::string &serial) {
-  return _db->GetCertificate(serial);
+StoredCertificateModelPtr CaService::GetCertificate(const std::string &serial) {
+  auto model = _db->GetCertificate(serial);
+  if (model != nullptr) {
+    auto result = std::make_shared<StoredCertificateModel>();
+    result->caSerial = model->caSerial;
+    result->serial = model->serial;
+    result->thumbprint = model->thumbprint;
+    result->commonName = model->commonName;
+    result->issueDate = model->issueDate;
+    result->revokeDate = model->revokeDate;
+    return result;
+  }
+  return nullptr;
 }
-std::vector<CertificateModelPtr>
+std::vector<StoredCertificateModelPtr>
 CaService::GetCertificates(const std::string &caSerial) {
-  return _db->GetCertificates(caSerial);
+  auto result = std::vector<StoredCertificateModelPtr>();
+  auto models = _db->GetCertificates(caSerial);
+  for (auto m : models) {
+    auto cert = std::make_shared<StoredCertificateModel>();
+    cert->caSerial = m->caSerial;
+    cert->serial = m->serial;
+    cert->thumbprint = m->thumbprint;
+    cert->commonName = m->commonName;
+    cert->issueDate = m->issueDate;
+    cert->revokeDate = m->revokeDate;
+    result.push_back(cert);
+  }
+  return result;
 }
-std::vector<CertificateModelPtr> CaService::GetAllCertificates() {
-  return _db->GetAllCertificates();
+std::vector<StoredCertificateModelPtr> CaService::GetAllCertificates() {
+  auto result = std::vector<StoredCertificateModelPtr>();
+  auto models = _db->GetAllCertificates();
+  for (auto m : models) {
+    auto cert = std::make_shared<StoredCertificateModel>();
+    cert->caSerial = m->caSerial;
+    cert->serial = m->serial;
+    cert->thumbprint = m->thumbprint;
+    cert->commonName = m->commonName;
+    cert->issueDate = m->issueDate;
+    cert->revokeDate = m->revokeDate;
+    result.push_back(cert);
+  }
+  return result;
 }
 
 StoredCertificateAuthorityModelPtr CaService::GetCa(const std::string &serial) {
   auto model = _db->GetCa(serial);
   auto result = std::make_shared<StoredCertificateAuthorityModel>();
-  result->serial = model->serial;
-  result->thumbprint = model->thumbprint;
-  result->commonName = model->commonName;
+  result->serial = std::string_view(model->serial.data());
+  result->thumbprint = std::string_view(model->thumbprint.data());
+  result->commonName = std::string_view(model->commonName.data());
   result->issueDate = model->issueDate;
-  result->publicUrl = model->publicUrl;
-  result->certificate = model->certificate;
+  result->publicUrl = std::string_view(model->publicUrl);
   return result;
+}
+
+std::vector<std::byte>
+CaService::GetCaCertificateData(const std::string &serial) {
+  return _db->GetCaCertificateData(serial);
 }
 
 std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
@@ -53,7 +132,6 @@ std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
     entry->commonName = model->commonName;
     entry->issueDate = model->issueDate;
     entry->publicUrl = model->publicUrl;
-    entry->certificate = model->certificate;
     result.push_back(entry);
   }
   return result;
@@ -61,18 +139,61 @@ std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
 
 StoredCertificateAuthorityModelPtr
 CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
-  auto caCert = _crypto->GeneratedCACertificate(model.request);
+  JuridicalPersonCertificateRequest req;
+  req.commonName = model.commonName;
+  req.country = model.country;
+  req.stateOrProvinceName = model.stateOrProvinceName;
+  req.localityName = model.localityName;
+  req.streetAddress = model.streetAddress;
+  req.emailAddress = model.emailAddress;
+  req.innLe = model.innLe;
+  req.ogrn = model.ogrn;
+  req.organizationName = model.organizationName;
+  req.algorithm = model.algorithm;
+  req.ttlInDays = model.ttlInDays;
+
+  auto caCert = _crypto->GeneratedCACertificate(req);
   CertificateAuthorityModel data{.serial = caCert->serialNumber,
                                  .thumbprint = caCert->thumbprint,
-                                 .commonName = model.request.commonName,
+                                 .commonName = model.commonName,
                                  .certificate = caCert->certificate,
                                  .privateKey = caCert->privateKey,
                                  .publicUrl = model.publicUrl};
-  auto dt = datetime::utc_now_str();
-  data.issueDate = std::string_view(dt);
+  auto dt = datetime::utc_now();
+  data.issueDate = dt;
 
   _db->AddCA(data);
   return GetCa(caCert->serialNumber);
+}
+
+PKCS12ContainerUPtr
+CaService::CreateClientCertificate(const std::string_view &caSerial,
+                                   const IssueCertificateModel &model) {
+  auto caInfo = GetCaInfo(caSerial);
+  PKCS12ContainerUPtr container{nullptr};
+
+  if (model.subjectType == SujectTypeEnum::PhysicalPerson) {
+    auto req = new PhysicalPersonCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
+    delete req;
+  } else if (model.subjectType == SujectTypeEnum::IndividualEntrepreneur) {
+    auto req = new IndividualEntrepreneurCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
+    delete req;
+  } else if (model.subjectType == SujectTypeEnum::JuridicalPerson) {
+    auto req = new JuridicalPersonCertificateRequest();
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
+    delete req;
+  } else {
+    LOG_ERROR("SubjectTypeEnum value: {} not supported.",
+              (int)model.subjectType);
+    throw std::runtime_error("Invalid SubjectTypeEnum value");
+  }
+
+  if (container == nullptr)
+    throw std::runtime_error("Container is null");
+  SaveClientCertificate(caSerial, model.commonName, container);
+  return std::move(container);
 }
 
 PKCS12ContainerUPtr CaService::CreateClientCertificate(
@@ -112,6 +233,8 @@ std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
   auto crl = _db->GetActualCrl(caSerial);
   if (crl == nullptr)
     return InvalidateCrl(caSerial);
+  if (crl->expireDate == nullptr || crl->expireDate < datetime::utc_now())
+    return InvalidateCrl(caSerial);
   auto lastRevoked = _db->GetLastRevoked(caSerial);
   if (lastRevoked != nullptr && crl->lastSerial != lastRevoked->serial)
     return InvalidateCrl(caSerial);
@@ -119,32 +242,37 @@ std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
 }
 
 std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
-  //TODO: optimize db call
+  // TODO: optimize db call
+  auto issueDate = datetime::utc_now();
+  auto expireDate = datetime::add_days(issueDate, 1);
   auto crlInfo = _db->GetActualCrl(caSerial);
-  auto lastRevoked = _db->GetLastRevoked(caSerial);
   auto caInfo = GetCaInfo(caSerial);
   long number = 1;
-  if(crlInfo != nullptr) {
+  if (crlInfo != nullptr) {
     number = crlInfo->number + 1;
   }
   auto revokedCerts = _db->GetRevokedListOrderByRevokeDateDesc(caSerial);
   CrlRequest req;
   req.number = number;
-  for(auto cert : revokedCerts) {
-    req.entries.push_back(CrlEntry{
-      .serialNumber = cert->serial,
-      .revokationDate = cert->revokeDate
-    });
+  for (auto cert : revokedCerts) {
+    req.entries.push_back(CrlEntry{.serialNumber = cert->serial.data(),
+                                   .revokationDate = cert->revokeDate});
   }
-  auto crl = _crypto->GenerateCrl(req, caInfo);
-  auto dtNow = datetime::utc_now_str();
-  CrlModel model {
-    .caSerial = caSerial,
-    .number = number,
-    .issueDate = dtNow,
-    .content = crl.get()->content
-  };
-  if(lastRevoked != nullptr) model.lastSerial = lastRevoked->serial;
+  std::sort(req.entries.begin(), req.entries.end(),
+            [](const CrlEntry &a, const CrlEntry &b) {
+              return *a.revokationDate <= *b.revokationDate;
+            });
+  std::string serial;
+  auto crl = _crypto->GenerateCrl(req, caInfo, issueDate, expireDate);
+  CrlModel model{.caSerial = caSerial,
+                 .number = number,
+                 .issueDate = issueDate,
+                 .expireDate = expireDate,
+                 .content = crl.get()->content};
+  if (!req.entries.empty()) {
+    serial = req.entries[req.entries.size() - 1].serialNumber;
+    model.lastSerial = serial;
+  }
   _db->AddCrl(model);
   return crl.get()->content;
 }
@@ -174,7 +302,7 @@ void CaService::SaveClientCertificate(const std::string_view &caSerial,
   model.serial = container->serialNumber;
   model.thumbprint = container->thumbprint;
   model.commonName = commonName;
-  auto dt = datetime::utc_now_str();
-  model.issueDate = std::string_view(dt);
+  auto dt = datetime::utc_now();
+  model.issueDate = dt;
   _db->AddCertificate(model);
 }

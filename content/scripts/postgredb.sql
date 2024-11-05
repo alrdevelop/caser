@@ -56,6 +56,7 @@ CREATE TABLE public.crl (
 	"caSerial" varchar(250) NOT NULL,
 	"number" integer NOT NULL,
 	"issueDate" timestamp with time zone NOT NULL,
+	"expireDate" timestamp with time zone NOT NULL,
 	"lastSerial" varchar(250) NULL,
 	"content" bytea NOT NULL,
 	CONSTRAINT crl_pk PRIMARY KEY ("caSerial","number")

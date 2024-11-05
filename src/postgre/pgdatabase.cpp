@@ -1,5 +1,3 @@
-#include "pgdatabase.h"
-#include "./../common/logger.h"
 #include "connection_pool.h"
 #include <cstddef>
 #include <cstdint>
@@ -12,6 +10,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "pgdatabase.h"
+#include "type_spesc/datetime_spec.h"
+#include "./../common/logger.h"
+
 
 using namespace postgre;
 
@@ -36,8 +39,8 @@ CertificateModelPtr PgDatabase::GetCertificate(const std::string &certSerial) {
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, std::string_view, std::string_view>(
-             query, {certSerial})) {
+                    std::string_view, DateTimePtr, DateTimePtr>(query,
+                                                                {certSerial})) {
       auto model = std::make_shared<CertificateModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -52,6 +55,9 @@ CertificateModelPtr PgDatabase::GetCertificate(const std::string &certSerial) {
       return nullptr;
     return result[0];
 
+  } catch (const std::exception &ex) {
+    LOG_ERROR("{}", ex.what());
+    throw;
   } catch (...) {
     throw;
   }
@@ -72,8 +78,8 @@ PgDatabase::GetCertificates(const std::string &caSerial) {
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, std::string_view, std::string_view>(
-             query, {caSerial})) {
+                    std::string_view, DateTimePtr, DateTimePtr>(query,
+                                                                {caSerial})) {
       auto model = std::make_shared<CertificateModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -103,8 +109,7 @@ std::vector<CertificateModelPtr> PgDatabase::GetAllCertificates() {
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, std::string_view, std::string_view>(
-             query)) {
+                    std::string_view, DateTimePtr, DateTimePtr>(query)) {
       auto model = std::make_shared<CertificateModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -137,8 +142,8 @@ PgDatabase::GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) {
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, std::string_view, std::string_view>(
-             query, {caSerial})) {
+                    std::string_view, DateTimePtr, DateTimePtr>(query,
+                                                                {caSerial})) {
       auto model = std::make_shared<CertificateModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -155,7 +160,7 @@ PgDatabase::GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) {
   }
 }
 
-CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
+CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial) {
   try {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();
@@ -163,15 +168,16 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
         "SELECT \"serial\", \"thumbprint\", \"caSerial\", "
         "\"commonName\", \"issueDate\", \"revokeDate\" "
         "FROM certificates "
-        "WHERE \"revokeDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1) ORDER BY \"revokeDate\" DESC LIMIT 1";
+        "WHERE \"revokeDate\" IS NOT NULL AND UPPER(\"caSerial\") = UPPER($1) "
+        "ORDER BY \"revokeDate\" DESC LIMIT 1";
     pqxx::work tran(*conn);
     std::vector<CertificateModelPtr> result;
 
     for (auto [serial, thumbprint, caSerial, commonName, issueDate,
                revokeDate] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, std::string_view, std::string_view>(
-             query, {caSerial})) {
+                    std::string_view, DateTimePtr, DateTimePtr>(query,
+                                                                {caSerial})) {
       auto model = std::make_shared<CertificateModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -181,7 +187,8 @@ CertificateModelPtr PgDatabase::GetLastRevoked(const std::string &caSerial){
       model->revokeDate = revokeDate;
       result.push_back(model);
     }
-    if(result.empty()) return nullptr;
+    if (result.empty())
+      return nullptr;
     return result[0];
   } catch (...) {
     throw;
@@ -205,8 +212,8 @@ CertificateAuthorityModelPtr PgDatabase::GetCa(const std::string &serial) {
     for (auto [serial, thumbprint, commonName, issueDate, certificate,
                privateKey, publicUrl] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, pqxx::bytes, pqxx::bytes,
-                    std::string_view>(query, {serial})) {
+                    DateTimePtr, pqxx::bytes, pqxx::bytes, std::string_view>(
+             query, {serial})) {
       auto model = std::make_shared<CertificateAuthorityModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -242,8 +249,8 @@ std::vector<CertificateAuthorityModelPtr> PgDatabase::GetAllCa() {
     for (auto [serial, thumbprint, commonName, issueDate, certificate,
                privateKey, publicUrl] :
          tran.query<std::string_view, std::string_view, std::string_view,
-                    std::string_view, pqxx::bytes, pqxx::bytes,
-                    std::string_view>(query)) {
+                    DateTimePtr, pqxx::bytes, pqxx::bytes, std::string_view>(
+             query)) {
       auto model = std::make_shared<CertificateAuthorityModel>();
       model->serial = serial;
       model->thumbprint = thumbprint;
@@ -255,6 +262,30 @@ std::vector<CertificateAuthorityModelPtr> PgDatabase::GetAllCa() {
           std::vector<std::byte>(privateKey.begin(), privateKey.end());
       model->publicUrl = publicUrl;
       result.push_back(model);
+    }
+    tran.commit();
+    return result;
+  } catch (...) {
+    throw;
+  }
+}
+
+std::vector<std::byte> PgDatabase::GetCaCertificateData(const std::string &serial){
+  try {
+    ConnectionScope scope(_connectionPool);
+    auto conn = scope.GetConnection();
+    std::vector<std::byte> result;
+    static auto query =
+        "SELECT \"certificate\" "
+        "FROM ca "
+        "WHERE UPPER(\"serial\") = UPPER($1) "
+        "ORDER BY \"issueDate\" LIMIT 1";
+    pqxx::work tran(*conn);
+
+    for (auto [content] :
+         tran.query<pqxx::bytes>(query, serial)) {
+      auto model = std::make_shared<CertificateAuthorityModel>();
+      result = std::vector<std::byte>(content.begin(), content.end());
     }
     tran.commit();
     return result;
@@ -324,12 +355,12 @@ void PgDatabase::AddCrl(const CrlModel &crl) {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();
     static auto query = "INSERT INTO crl(\"caSerial\", \"number\", "
-                        "\"issueDate\", \"lastSerial\", \"content\") "
-                        "VALUES ($1, $2, $3, $4, $5)";
+                        "\"issueDate\", \"expireDate\", \"lastSerial\", \"content\") "
+                        "VALUES ($1, $2, $3, $4, $5, $6)";
     conn->prepare("insert_crl", query);
     pqxx::work tran(*conn);
     auto result = tran.exec_prepared(
-        "insert_crl", crl.caSerial, crl.number, crl.issueDate, crl.lastSerial,
+        "insert_crl", crl.caSerial, crl.number, crl.issueDate, crl.expireDate, crl.lastSerial,
         pqxx::binary_cast(crl.content.data(), crl.content.size()));
     tran.commit();
 
@@ -342,22 +373,26 @@ CrlModelPtr PgDatabase::GetActualCrl(const std::string &caSerial) {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();
     std::vector<CrlModelPtr> result;
-    static auto query =
-        "SELECT \"caSerial\", \"number\", \"issueDate\", \"lastSerial\", \"content\" "
-        "FROM crl "
-        "WHERE UPPER(\"caSerial\") = UPPER($1)"
-        "ORDER BY number DESC LIMIT 1";
+    static auto query = "SELECT \"caSerial\", \"number\", \"issueDate\", "
+                        "\"expireDate\", \"lastSerial\", \"content\" "
+                        "FROM crl "
+                        "WHERE UPPER(\"caSerial\") = UPPER($1)"
+                        "ORDER BY number DESC LIMIT 1";
     pqxx::work tran(*conn);
-    for(auto[caSerial, number, issueDate, lastSerial, content] : tran.query<std::string_view, long, std::string_view, std::string_view, pqxx::bytes>(query, caSerial)) {
+    for (auto [caSerial, number, issueDate, expireDate, lastSerial, content] :
+         tran.query<std::string_view, long, DateTimePtr, DateTimePtr, std::string_view,
+                    pqxx::bytes>(query, caSerial)) {
       auto model = std::make_shared<CrlModel>();
       model->caSerial = caSerial;
       model->number = number;
       model->issueDate = issueDate;
+      model->expireDate = expireDate;
       model->lastSerial = lastSerial;
       model->content = std::vector(content.begin(), content.end());
       result.push_back(model);
     }
-    if(result.empty()) return nullptr;
+    if (result.empty())
+      return nullptr;
     return result[0];
   } catch (...) {
     throw;
