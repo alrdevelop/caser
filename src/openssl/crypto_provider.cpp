@@ -258,7 +258,7 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
     X509_NAME *name = X509_get_subject_name(cert);
 
     for (auto subjPair : subject) {
-      NameAddEntry(name, subjPair.first.data(), subjPair.second.data());
+      NameAddEntry(name, subjPair.first, subjPair.second);
     }
 
     // set public key

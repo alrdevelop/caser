@@ -130,8 +130,23 @@ inline void from_json(const json &json, IssueCertificateModel &model) {
   if(json.contains("title")) json.at("title").get_to(model.title);
 }
 
-inline void to_json(json &j,
-                    const service::models::StoredCertificateModelPtr &model) {
+inline void from_json(const json &json, CreateCertificateAuthorityModel &model) {
+  json.at("algorithm").get_to(model.algorithm);
+  json.at("ttlInDays").get_to(model.ttlInDays);
+  json.at("commonName").get_to(model.commonName);
+  json.at("publicUrl").get_to(model.publicUrl);
+  
+  if(json.contains("country")) json.at("country").get_to(model.country);
+  if(json.contains("localityName")) json.at("localityName").get_to(model.localityName);
+  if(json.contains("stateOrProvinceName")) json.at("stateOrProvinceName").get_to(model.stateOrProvinceName);
+  if(json.contains("streetAddress")) json.at("streetAddress").get_to(model.streetAddress);
+  if(json.contains("emailAddress")) json.at("emailAddress").get_to(model.emailAddress);
+  if(json.contains("innLe")) json.at("innLe").get_to(model.innLe);
+  if(json.contains("ogrn")) json.at("ogrn").get_to(model.ogrn);
+  if(json.contains("organizationName")) json.at("organizationName").get_to(model.organizationName);
+}
+
+inline void to_json(json &j, const service::models::StoredCertificateModelPtr &model) {
   j["serial"] = model->serial;
   j["thumbprint"] = model->thumbprint;
   j["caSerial"] = model->caSerial;

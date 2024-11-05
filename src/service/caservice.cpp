@@ -150,6 +150,7 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
   req.ogrn = model.ogrn;
   req.organizationName = model.organizationName;
   req.algorithm = model.algorithm;
+  req.ttlInDays = model.ttlInDays;
 
   auto caCert = _crypto->GeneratedCACertificate(req);
   CertificateAuthorityModel data{.serial = caCert->serialNumber,

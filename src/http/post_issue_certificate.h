@@ -15,12 +15,12 @@ namespace http {
 using namespace nlohmann;
 using namespace nlohmann::literals;
 
-class IssuePhysicalPersonEndpoint
+class IssueCertificateEndpoint
     : public ApiPostEndpoint<std::pair<std::string_view, service::models::IssueCertificateModel>> {
 public:
-  IssuePhysicalPersonEndpoint(serivce::CaServicePtr caService)
+  IssueCertificateEndpoint(serivce::CaServicePtr caService)
       : _caService(caService) {}
-  virtual ~IssuePhysicalPersonEndpoint() = default;
+  virtual ~IssueCertificateEndpoint() = default;
   const char *Route() const override { return "ca/{caSerial}/issue/"; }
 
 protected:

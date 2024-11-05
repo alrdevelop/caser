@@ -30,6 +30,7 @@
 #include "http/get_certificates.h"
 #include "http/get_crl.h"
 #include "http/get_crt.h"
+#include "http/post_create_ca.h"
 #include "http/post_issue_certificate.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
@@ -141,7 +142,8 @@ int main() {
     http::GetCertificatesEndpoint getCertificates(caService);
     http::GetCaEndpoint getCa(caService);
     http::GetCaCertificateEndpoint getCaCert(caService);
-    http::IssuePhysicalPersonEndpoint issueCert(caService);
+    http::IssueCertificateEndpoint issueCert(caService);
+    http::CreateCaEndpoint createCa(caService);
 
     ws.register_resource(getCrl.Route(), &getCrl);
     ws.register_resource(getCrt.Route(), &getCrt);
@@ -150,6 +152,7 @@ int main() {
     ws.register_resource(getCa.Route(), &getCa);
     ws.register_resource(getCaCert.Route(), &getCaCert);
     ws.register_resource(issueCert.Route(),&issueCert);
+    ws.register_resource(createCa.Route(), &createCa);
     ws.start(true);
 
   } catch (std::exception &ex) {
