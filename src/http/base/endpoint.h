@@ -13,6 +13,11 @@ public:
   virtual ~ApiEndpoint() = default;
   virtual const char *Route() const = 0;
 
+  void Register(httpserver::webserver &ws) {
+    LOG_INFO("Endpoint {} added.", Route());
+    ws.register_resource(Route(), this);
+  }
+
 protected:
   virtual TRequest BuildRequestModel(const httpserver::http_request &req) = 0;
   virtual HttpResponsePtr Handle(const TRequest &model) = 0;

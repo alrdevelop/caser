@@ -1,5 +1,12 @@
 # caserv
 
+## Configuration
+Setup ENV CASERV_PGDB
+Example (defaulValue):
+```
+postgresql://admin:admin@127.0.0.1:5432/postgres
+```
+
 ## Enums
 algorithm:
 0 - GOST2012_256
