@@ -36,7 +36,7 @@ public:
       return MHD_create_response_from_buffer(0, nullptr,
                                              MHD_RESPMEM_PERSISTENT);
     return MHD_create_response_from_buffer(_content.size(), _content.data(),
-                                           MHD_RESPMEM_PERSISTENT);
+                                           MHD_RESPMEM_MUST_COPY);
   }
 
 private:

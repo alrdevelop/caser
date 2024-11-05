@@ -118,15 +118,16 @@ CertificateUPtr OpensslCryptoProvider::GeneratedCACertificate(
 }
 
 CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
-                                           const CaInfo &CaInfo) {
+                                           const CaInfo &CaInfo,
+                                           const DateTimePtr &issueDate,
+                                           const DateTimePtr &expireDate) {
   EVP_PKEY *issuerKp = openssl::get_private_key(CaInfo.privateKey);
   X509 *issuerCert = openssl::get_certificate(CaInfo.certificate);
 
   auto lasUpdate = ASN1_UTCTIME_new();
   auto nextUpdate = ASN1_UTCTIME_new();
-  auto utcTimeNow = datetime::utc_now();
-  ASN1_UTCTIME_adj(lasUpdate, *utcTimeNow, 0, 0);
-  ASN1_UTCTIME_adj(nextUpdate, *utcTimeNow, 1, 0);
+  ASN1_UTCTIME_adj(lasUpdate, *issueDate, 0, 0);
+  ASN1_UTCTIME_adj(nextUpdate, *expireDate, 0, 0);
 
   auto crl = X509_CRL_new();
   OSSL_CHECK(X509_CRL_set_version(crl, X509_CRL_VERSION_2));
@@ -143,7 +144,8 @@ CrlUPtr OpensslCryptoProvider::GenerateCrl(const CrlRequest &req,
   ASN1_INTEGER_free(crlNumber);
   for (auto e : req.entries) {
     if (!e.serialNumber.empty()) {
-      auto revoked = CreateRevokedEntry(e.serialNumber.data(), *e.revokationDate);
+      auto revoked =
+          CreateRevokedEntry(e.serialNumber.data(), *e.revokationDate);
       OSSL_CHECK(X509_CRL_add0_revoked(crl, revoked));
     }
   }
@@ -343,7 +345,7 @@ CertificateUPtr OpensslCryptoProvider::GenerateX509Certitificate(
   }
 }
 
-X509_REVOKED*
+X509_REVOKED *
 OpensslCryptoProvider::CreateRevokedEntry(const std::string_view serial,
                                           const DateTime &revokeDate) {
   auto revoked = X509_REVOKED_new();

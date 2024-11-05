@@ -64,7 +64,7 @@ public:
 
   CertificateUPtr
   GeneratedCACertificate(const JuridicalPersonCertificateRequest &req) override;
-  CrlUPtr GenerateCrl(const CrlRequest& req, const CaInfo& CaInfo) override;
+  CrlUPtr GenerateCrl(const CrlRequest& req, const CaInfo& CaInfo, const DateTimePtr &issueDate, const DateTimePtr &expireDate) override;
 
 private:
   using EvpPkeyUPtr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;

@@ -16,7 +16,7 @@ public:
   virtual PKCS12ContainerUPtr GenerateClientCertitificate(const IndividualEntrepreneurCertificateRequest& req, const CaInfo& caInfo) = 0;
   virtual PKCS12ContainerUPtr GenerateClientCertitificate(const JuridicalPersonCertificateRequest& req, const CaInfo& caInfo) = 0;
   virtual CertificateUPtr GeneratedCACertificate(const JuridicalPersonCertificateRequest& req) = 0;
-  virtual CrlUPtr GenerateCrl(const CrlRequest& req, const CaInfo& CaInfo) = 0;
+  virtual CrlUPtr GenerateCrl(const CrlRequest& req, const CaInfo& CaInfo, const DateTimePtr &issueDate, const DateTimePtr &expireDate) = 0;
 };
 
 using ICryptoProviderUPtr = std::unique_ptr<ICryptoProvider>;

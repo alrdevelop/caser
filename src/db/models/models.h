@@ -36,6 +36,7 @@ struct CrlModel {
   std::string caSerial;
   long number;
   DateTimePtr issueDate;
+  DateTimePtr expireDate;
   std::string lastSerial;
   std::vector<std::byte> content;
 };

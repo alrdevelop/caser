@@ -50,6 +50,8 @@ using namespace datetime;
     struct CrlRequest {
         long number;
         std::vector<CrlEntry> entries;
+        DateTimePtr issueDate;
+        DateTimePtr expireDate;
     };
 
 } // namespace contracts

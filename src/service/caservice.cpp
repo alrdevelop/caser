@@ -18,8 +18,8 @@
 
 using namespace serivce;
 
-
-const PhysicalPersonCertificateRequest& Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src){
+const PhysicalPersonCertificateRequest &
+Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
   dst.algorithm = src.algorithm;
   dst.commonName = src.commonName;
   dst.country = src.country;
@@ -35,14 +35,17 @@ const PhysicalPersonCertificateRequest& Map(PhysicalPersonCertificateRequest &ds
   return dst;
 }
 
-const IndividualEntrepreneurCertificateRequest& Map(IndividualEntrepreneurCertificateRequest &dst, const IssueCertificateModel &src) {
-  Map(static_cast<PhysicalPersonCertificateRequest&>(dst), src);
+const IndividualEntrepreneurCertificateRequest &
+Map(IndividualEntrepreneurCertificateRequest &dst,
+    const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest &>(dst), src);
   dst.ogrnip = src.ogrnip;
   return dst;
 }
 
-const JuridicalPersonCertificateRequest& Map(JuridicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
-  Map(static_cast<PhysicalPersonCertificateRequest&>(dst), src);
+const JuridicalPersonCertificateRequest &
+Map(JuridicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
+  Map(static_cast<PhysicalPersonCertificateRequest &>(dst), src);
   dst.innLe = src.innLe;
   dst.ogrn = src.ogrn;
   dst.organizationName = src.organizationName;
@@ -168,17 +171,17 @@ CaService::CreateClientCertificate(const std::string_view &caSerial,
   auto caInfo = GetCaInfo(caSerial);
   PKCS12ContainerUPtr container{nullptr};
 
-  if(model.subjectType == SujectTypeEnum::PhysicalPerson) {
+  if (model.subjectType == SujectTypeEnum::PhysicalPerson) {
     auto req = new PhysicalPersonCertificateRequest();
-    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
     delete req;
-  } else if ( model.subjectType == SujectTypeEnum::IndividualEntrepreneur) {
+  } else if (model.subjectType == SujectTypeEnum::IndividualEntrepreneur) {
     auto req = new IndividualEntrepreneurCertificateRequest();
-    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
     delete req;
   } else if (model.subjectType == SujectTypeEnum::JuridicalPerson) {
     auto req = new JuridicalPersonCertificateRequest();
-    container = _crypto->GenerateClientCertitificate(Map(*req,model), caInfo);
+    container = _crypto->GenerateClientCertitificate(Map(*req, model), caInfo);
     delete req;
   } else {
     LOG_ERROR("SubjectTypeEnum value: {} not supported.",
@@ -229,6 +232,8 @@ std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
   auto crl = _db->GetActualCrl(caSerial);
   if (crl == nullptr)
     return InvalidateCrl(caSerial);
+  if (crl->expireDate == nullptr || crl->expireDate < datetime::utc_now())
+    return InvalidateCrl(caSerial);
   auto lastRevoked = _db->GetLastRevoked(caSerial);
   if (lastRevoked != nullptr && crl->lastSerial != lastRevoked->serial)
     return InvalidateCrl(caSerial);
@@ -237,6 +242,8 @@ std::vector<std::byte> CaService::GetCrl(const std::string &caSerial) {
 
 std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
   // TODO: optimize db call
+  auto issueDate = datetime::utc_now();
+  auto expireDate = datetime::add_days(issueDate, 1);
   auto crlInfo = _db->GetActualCrl(caSerial);
   auto caInfo = GetCaInfo(caSerial);
   long number = 1;
@@ -255,11 +262,11 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
               return *a.revokationDate <= *b.revokationDate;
             });
   std::string serial;
-  auto crl = _crypto->GenerateCrl(req, caInfo);
-  auto dtNow = datetime::utc_now();
+  auto crl = _crypto->GenerateCrl(req, caInfo, issueDate, expireDate);
   CrlModel model{.caSerial = caSerial,
                  .number = number,
-                 .issueDate = dtNow,
+                 .issueDate = issueDate,
+                 .expireDate = expireDate,
                  .content = crl.get()->content};
   if (!req.entries.empty()) {
     serial = req.entries[req.entries.size() - 1].serialNumber;

@@ -1,6 +1,7 @@
 #ifndef _CASERV_COMMON_DATETIME_H_
 #define _CASERV_COMMON_DATETIME_H_
 
+#include <bits/chrono.h>
 #include <chrono>
 #include <ctime>
 #include <format>
@@ -24,7 +25,14 @@ inline DateTimePtr utc_now() {
   auto dt = new DateTime();
   *dt = std::chrono::system_clock::to_time_t(t);
   return DateTimePtr(dt);
-  //return std::chrono::system_clock::to_time_t(t);
+}
+
+inline DateTimePtr add_days(const DateTimePtr& dt, int days) {
+  auto tm = std::gmtime(dt.get());
+  tm->tm_mday += 1;
+  auto result = new DateTime();
+  *result = mktime(tm);
+  return DateTimePtr(result);
 }
 
 inline DateTimePtr from_utcstring(const std::string &dateTime) {

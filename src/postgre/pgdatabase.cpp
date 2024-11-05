@@ -57,6 +57,7 @@ CertificateModelPtr PgDatabase::GetCertificate(const std::string &certSerial) {
 
   } catch (const std::exception &ex) {
     LOG_ERROR("{}", ex.what());
+    throw;
   } catch (...) {
     throw;
   }
@@ -354,12 +355,12 @@ void PgDatabase::AddCrl(const CrlModel &crl) {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();
     static auto query = "INSERT INTO crl(\"caSerial\", \"number\", "
-                        "\"issueDate\", \"lastSerial\", \"content\") "
-                        "VALUES ($1, $2, $3, $4, $5)";
+                        "\"issueDate\", \"expireDate\", \"lastSerial\", \"content\") "
+                        "VALUES ($1, $2, $3, $4, $5, $6)";
     conn->prepare("insert_crl", query);
     pqxx::work tran(*conn);
     auto result = tran.exec_prepared(
-        "insert_crl", crl.caSerial, crl.number, crl.issueDate, crl.lastSerial,
+        "insert_crl", crl.caSerial, crl.number, crl.issueDate, crl.expireDate, crl.lastSerial,
         pqxx::binary_cast(crl.content.data(), crl.content.size()));
     tran.commit();
 
@@ -373,18 +374,19 @@ CrlModelPtr PgDatabase::GetActualCrl(const std::string &caSerial) {
     auto conn = scope.GetConnection();
     std::vector<CrlModelPtr> result;
     static auto query = "SELECT \"caSerial\", \"number\", \"issueDate\", "
-                        "\"lastSerial\", \"content\" "
+                        "\"expireDate\", \"lastSerial\", \"content\" "
                         "FROM crl "
                         "WHERE UPPER(\"caSerial\") = UPPER($1)"
                         "ORDER BY number DESC LIMIT 1";
     pqxx::work tran(*conn);
-    for (auto [caSerial, number, issueDate, lastSerial, content] :
-         tran.query<std::string_view, long, DateTimePtr, std::string_view,
+    for (auto [caSerial, number, issueDate, expireDate, lastSerial, content] :
+         tran.query<std::string_view, long, DateTimePtr, DateTimePtr, std::string_view,
                     pqxx::bytes>(query, caSerial)) {
       auto model = std::make_shared<CrlModel>();
       model->caSerial = caSerial;
       model->number = number;
       model->issueDate = issueDate;
+      model->expireDate = expireDate;
       model->lastSerial = lastSerial;
       model->content = std::vector(content.begin(), content.end());
       result.push_back(model);
