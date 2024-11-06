@@ -9,14 +9,16 @@ RUN apt-get upgrade && apt-get update \
 RUN git clone https://github.com/etr/libhttpserver.git \
     && cd libhttpserver && ./bootstrap && mkdir build && cd build \
     && ../configure && make && make install
-
+RUN rm -rf libhttpserver
 RUN git clone https://github.com/gost-engine/engine && cd engine && git submodule update --init \
     && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release .. \
     && cmake --build . --config Release \
     && cmake --build . --target install --config Release
+RUN rm -rf engine
 
 RUN git clone https://github.com/jtv/libpqxx.git && cd libpqxx && cmake . && cmake --build . && cmake --install .
+RUN rm -rf libpqxx
 
 #Insatll new dynamic libraries
 RUN ldconfig
