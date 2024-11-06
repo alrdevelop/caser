@@ -56,25 +56,17 @@ int main() {
     openssl::OpensslCryptoProvider provider;
     AppSettings settings;
 
-    auto connString = settings.GetParam("CASERV_PGDB", "postgresql://admin:admin@127.0.0.1:5432/postgres");
+    auto connString = settings.GetParam(
+        "CASERV_PGDB", "postgresql://admin:admin@127.0.0.1:5432/postgres");
     db::IDataBasePtr db = std::make_shared<postgre::PgDatabase>(connString);
     base::ICryptoProviderUPtr crypt =
         std::make_unique<openssl::OpensslCryptoProvider>();
     auto caService = std::make_shared<serivce::CaService>(db, std::move(crypt));
-    // caService->CreateCA(createCaModel);
-
-    // auto client = caService->CreateClientCertificate(
-    //     "E5767690E57697D703D8F3F21F047FC2", clientReq);
-    // std::ofstream file;
-    // file.open("test.pfx", std::ios::out | std::ios::binary);
-    // file.write(reinterpret_cast<const char*>(client->container.data()),
-    // client->container.size()); file.close();
 
     httpserver::webserver ws =
-        httpserver::create_webserver(8080)
-        .log_access(logInfo)
-        .log_error(logError);
-        
+        httpserver::create_webserver(8080).log_error(logError).log_access(
+            logInfo);
+
     http::GetCrlEndpoint getCrl(caService);
     http::GetCrtEndpoint getCrt(caService);
     http::GetCertificateEndpoint getCertificate(caService);

@@ -3,6 +3,8 @@ version: '3.4'
 services:
   caserver:
     image: caserver
+    environment:
+      CASERV_PGDB: "postgresql://admin:admin@postgres:5432/postgres"
     hostname: caserver
     ports:
       - "8080:8080"
