@@ -8,11 +8,11 @@ postgresql://admin:admin@127.0.0.1:5432/postgres
 ```
 
 ## Enums
-algorithm:
+algorithmEnum:
 - 0 - GOST2012_256
 - 1 - GOST2012_512
 
-subjectType:
+subjectTypeEnum:
 - 0 - ФЛ
 - 1 - ИП
 - 2 - ЮЛ
@@ -80,37 +80,7 @@ Create CA certificicate.
 Input model:
 ```
 {
-  algorithm : int
-  country : string
-  localityName : string
-  stateOrProvinceName : string
-  streetAddress : string
-  emailAddress : string
-  innLe : string
-  ogrn : string
-  organizationName : string
-  ttlInDays : int
-  publicUrl : string
-
-}
-```
-If success, returns model:
-```
-{
-  serial : string
-  thumbprint : string
-  commonName : string
-  issueDate : datetime
-  publicUrl : string
-}
-```
-
-### HTTP POST ca/create/
-Create CA certificicate.
-Input model:
-```
-{
-  algorithm : int
+  algorithm : algorithmEnum
   country : string
   localityName : string
   stateOrProvinceName : string
@@ -136,8 +106,8 @@ Issue client certificicate.
 Input model:
 ```
 {
-  subjectType : int
-  algorithm : int
+  subjectType : subjectTypeEnum
+  algorithm : algorithmEnum
   ttlInDays : int
   country : string
   localityName : string
