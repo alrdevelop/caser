@@ -66,12 +66,12 @@ Return certificates data model array.
 ```
 
 ### HTTP GET crl/{crlFile}
-- crlFile - CRL file name (temlate: {crlSerial}.crl)
+- crlFile - CRL file name (***template: {crlSerial}.crl***)
 Return CRL file.
 This endpoint used in certificate distribution points.
 
 ### HTTP GET crt/{crtFile}
-- crtFile - CA certificate file name (temlate: {crtSerial}.crl)
+- crtFile - CA certificate file name (***template: {crtSerial}.crl***)
 Return CA certificate file.
 This endpoint used in certificate distribution points.
 
