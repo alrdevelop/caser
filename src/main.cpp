@@ -88,7 +88,7 @@ int main() {
     ws.start(true);
 
   } catch (std::exception &ex) {
-    cout << ex.what() << endl;
+    LOG_ERROR("{}", ex.what());
   }
   return 0;
 }

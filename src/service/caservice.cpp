@@ -1,6 +1,7 @@
 #include "caservice.h"
 #include <cstddef>
 #include <ctime>
+#include <fmt/format.h>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -21,7 +22,7 @@ using namespace serivce;
 const PhysicalPersonCertificateRequest &
 Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
   dst.algorithm = src.algorithm;
-  dst.commonName = src.commonName;
+  src.surname.empty() ? dst.commonName = fmt::format("{} {}", src.surname, src.givenName) : dst.commonName = src.givenName;
   dst.country = src.country;
   dst.localityName = src.localityName;
   dst.stateOrProvinceName = src.stateOrProvinceName;
@@ -49,6 +50,7 @@ Map(JuridicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
   dst.innLe = src.innLe;
   dst.ogrn = src.ogrn;
   dst.organizationName = src.organizationName;
+  dst.commonName = src.organizationName;
   dst.organizationUnitName = src.organizationUnitName;
   dst.title = src.title;
   return dst;
@@ -140,7 +142,7 @@ std::vector<StoredCertificateAuthorityModelPtr> CaService::GetAllCa() {
 StoredCertificateAuthorityModelPtr
 CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
   JuridicalPersonCertificateRequest req;
-  req.commonName = model.commonName;
+  req.commonName = model.organizationName;
   req.country = model.country;
   req.stateOrProvinceName = model.stateOrProvinceName;
   req.localityName = model.localityName;
@@ -155,7 +157,7 @@ CaService::CreateCA(const CreateCertificateAuthorityModel &model) {
   auto caCert = _crypto->GeneratedCACertificate(req);
   CertificateAuthorityModel data{.serial = caCert->serialNumber,
                                  .thumbprint = caCert->thumbprint,
-                                 .commonName = model.commonName,
+                                 .commonName = model.organizationName,
                                  .certificate = caCert->certificate,
                                  .privateKey = caCert->privateKey,
                                  .publicUrl = model.publicUrl};
@@ -192,7 +194,7 @@ CaService::CreateClientCertificate(const std::string_view &caSerial,
 
   if (container == nullptr)
     throw std::runtime_error("Container is null");
-  SaveClientCertificate(caSerial, model.commonName, container);
+  SaveClientCertificate(caSerial, model.organizationName, container);
   return std::move(container);
 }
 

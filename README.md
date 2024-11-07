@@ -9,19 +9,40 @@ postgresql://admin:admin@127.0.0.1:5432/postgres
 
 ## Enums
 algorithm:
-0 - GOST2012_256
-1 - GOST2012_512
+- 0 - GOST2012_256
+- 1 - GOST2012_512
 
 subjectType:
-0 - ФЛ
-1 - ИП
-2 - ЮЛ
+- 0 - ФЛ
+- 1 - ИП
+- 2 - ЮЛ
+
+## API
+
+### HTTP GET ca/{caSerial}/certificate
+- caSerial - CA serial number
+Return CA certificate file in BER encoding.
+
+### HTTP GET ca/{caSerial}
+- caSerial - CA serial number
+Return CA data model.
+```
+{
+  serial : string
+  thumbprint : string
+  caSerial : string
+  commonName : string
+  issueDate : datetime
+}
+
+```
+
 
 ## CURL requests
 
 CA:
 ```
-curl -X POST http://localhost:8080/ca/create/ -H 'Content-Type: application/json' -d  '{"commonName": "ООО Очень Тестовый УЦ 2", "country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург", "streetAddress" : "ул. Большая Морская", "emailAddress" : "test@testemail.ru", "innLe" : "1234567890", "ogrn" : "1234567890123", "organizationName" : "ООО Очень Тестовый УЦ", "publicUrl: : "http://localhost:8080", "algorithm" : 1, "ttlInDays" : 3650}'
+curl -X POST http://localhost:8080/ca/create/ -H 'Content-Type: application/json' -d  '{"country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург", "streetAddress" : "ул. Большая Морская", "emailAddress" : "test@testemail.ru", "innLe" : "1234567890", "ogrn" : "1234567890123", "organizationName" : "ООО Очень Тестовый УЦ", "publicUrl" : "http://localhost:8080", "algorithm" : 1, "ttlInDays" : 3650}'
 ```
 
 Client:

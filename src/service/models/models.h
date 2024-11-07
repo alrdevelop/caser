@@ -17,7 +17,6 @@ using namespace contracts;
 
 struct CreateCertificateAuthorityModel {
   AlgorithmEnum algorithm{AlgorithmEnum::GostR3410_2012_256};
-  std::string commonName;
   std::string country{"RU"};
   std::string localityName;
   std::string stateOrProvinceName;
@@ -51,7 +50,6 @@ struct IssueCertificateModel {
   SujectTypeEnum subjectType{SujectTypeEnum::PhysicalPerson};
   AlgorithmEnum algorithm{AlgorithmEnum::GostR3410_2012_256};
   uint16_t ttlInDays{365};
-  std::string commonName;
   std::string country{"RU"};
   std::string localityName;
   std::string stateOrProvinceName;
@@ -83,7 +81,6 @@ inline void from_json(const json &json, IssueCertificateModelPtr &model) {
   json.at("subjectType").get_to(model->subjectType);
   json.at("algorithm").get_to(model->algorithm);
   json.at("ttlInDays").get_to(model->ttlInDays);
-  json.at("commonName").get_to(model->commonName);
   json.at("country").get_to(model->country);
   json.at("localityName").get_to(model->localityName);
   json.at("stateOrProvinceName").get_to(model->stateOrProvinceName);
@@ -111,7 +108,6 @@ inline void from_json(const json &json, IssueCertificateModel &model) {
   json.at("subjectType").get_to(model.subjectType);
   json.at("algorithm").get_to(model.algorithm);
   json.at("ttlInDays").get_to(model.ttlInDays);
-  json.at("commonName").get_to(model.commonName);
   
   if(json.contains("country")) json.at("country").get_to(model.country);
   if(json.contains("localityName")) json.at("localityName").get_to(model.localityName);
@@ -133,7 +129,6 @@ inline void from_json(const json &json, IssueCertificateModel &model) {
 inline void from_json(const json &json, CreateCertificateAuthorityModel &model) {
   json.at("algorithm").get_to(model.algorithm);
   json.at("ttlInDays").get_to(model.ttlInDays);
-  json.at("commonName").get_to(model.commonName);
   json.at("publicUrl").get_to(model.publicUrl);
   
   if(json.contains("country")) json.at("country").get_to(model.country);

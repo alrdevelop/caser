@@ -1,17 +1,5 @@
--- DROP SCHEMA public;
 
-CREATE SCHEMA public AUTHORIZATION "admin";
-
-COMMENT ON SCHEMA public IS 'standard public schema';
--- public.ca определение
-
--- Drop tables
-DROP TABLE public.certificates;
-DROP TABLE public.ca;
-
-
-
-CREATE TABLE public.ca (
+CREATE TABLE IF NOT EXISTS public.ca (
 	"serial" varchar(250) NOT NULL,
 	"thumbprint" varchar(250) NOT NULL,
 	"commonName" varchar(500) NOT NULL,
@@ -22,17 +10,7 @@ CREATE TABLE public.ca (
 	CONSTRAINT ca_serial_pk PRIMARY KEY ("serial"),
 	CONSTRAINT ca_unique_thumbprint UNIQUE ("thumbprint")
 );
-
--- Permissions
-
-ALTER TABLE public.ca OWNER TO "admin";
-GRANT ALL ON TABLE public.ca TO "admin";
-
-
--- public.certificates определение
-
-
-CREATE TABLE public.certificates (
+CREATE TABLE IF NOT EXISTS public.certificates (
 	"serial" varchar(250) NOT NULL,
 	"thumbprint" varchar(250) NOT NULL,
 	"caSerial" varchar(250) NOT NULL,
@@ -44,15 +22,7 @@ CREATE TABLE public.certificates (
 	CONSTRAINT certificates_ca_fk FOREIGN KEY ("caSerial") REFERENCES public.ca("serial")
 );
 
--- Permissions
-
-ALTER TABLE public.certificates OWNER TO "admin";
-GRANT ALL ON TABLE public.certificates TO "admin";
-
-
--- public.crl определение
-
-CREATE TABLE public.crl (
+CREATE TABLE IF NOT EXISTS public.crl (
 	"caSerial" varchar(250) NOT NULL,
 	"number" integer NOT NULL,
 	"issueDate" timestamp with time zone NOT NULL,
@@ -61,14 +31,3 @@ CREATE TABLE public.crl (
 	"content" bytea NOT NULL,
 	CONSTRAINT crl_pk PRIMARY KEY ("caSerial","number")
 );
--- Permissions
-
-ALTER TABLE public.crl OWNER TO "admin";
-GRANT ALL ON TABLE public.crl TO "admin";
-
-
-
--- Permissions
-
-GRANT ALL ON SCHEMA public TO "admin";
-GRANT ALL ON SCHEMA public TO public;
