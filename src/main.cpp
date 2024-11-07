@@ -67,22 +67,22 @@ int main() {
         httpserver::create_webserver(8080).log_error(logError).log_access(
             logInfo);
 
-    http::GetCrlEndpoint getCrl(caService);
-    http::GetCrtEndpoint getCrt(caService);
-    http::GetCertificateEndpoint getCertificate(caService);
-    http::GetCertificatesEndpoint getCertificates(caService);
-    http::GetCaEndpoint getCa(caService);
-    http::GetCaCertificateEndpoint getCaCert(caService);
-    http::IssueCertificateEndpoint issueCert(caService);
-    http::CreateCaEndpoint createCa(caService);
-    getCrl.Register(ws);
-    getCrt.Register(ws);
-    getCertificate.Register(ws);
-    getCertificates.Register(ws);
-    getCa.Register(ws);
-    getCaCert.Register(ws);
-    issueCert.Register(ws);
-    createCa.Register(ws);
+    auto getCrl = std::make_shared<http::GetCrlEndpoint>(caService);
+    auto getCrt = std::make_shared<http::GetCrtEndpoint>(caService);
+    auto getCertificate = std::make_shared<http::GetCertificateEndpoint>(caService);
+    auto getCertificates = std::make_shared<http::GetCertificatesEndpoint>(caService);
+    auto getCa = std::make_shared<http::GetCaEndpoint>(caService);
+    auto getCaCert = std::make_shared<http::GetCaCertificateEndpoint>(caService);
+    auto issueCert = std::make_shared<http::IssueCertificateEndpoint>(caService);
+    auto  createCa = std::make_shared<http::CreateCaEndpoint>(caService);
+    getCrl->Register(ws);
+    getCrt->Register(ws);
+    getCertificate->Register(ws);
+    getCertificates->Register(ws);
+    getCa->Register(ws);
+    getCaCert->Register(ws);
+    issueCert->Register(ws);
+    createCa->Register(ws);
 
     LOG_INFO("Server started.")
     ws.start(true);
