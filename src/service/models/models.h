@@ -65,6 +65,7 @@ struct IssueCertificateModel {
   std::string organizationName;
   std::string organizationUnitName;
   std::string title;
+  std::string pin;
 };
 
 using CreateCertificateAuthorityModelPtr =
