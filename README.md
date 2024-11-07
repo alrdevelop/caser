@@ -136,6 +136,8 @@ Input model:
 }
 ```
 Example:
+
+СURL request:
 ```
 curl -X POST http://localhost:8080/ca/create/ -H 'Content-Type: application/json' -d  '{"country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург", "streetAddress" : "ул. Большая Морская", "emailAddress" : "test@testemail.ru", "innLe" : "1234567890", "ogrn" : "1234567890123", "organizationName" : "ООО Очень Тестовый УЦ", "publicUrl" : "http://localhost:8080", "algorithm" : 1, "ttlInDays" : 3650}'
 ```
@@ -171,7 +173,66 @@ Input model:
 If success, returns PKCS12 container file
 
 Example:
+СURL request:
 ```
 curl -X POST http://localhost:8080/ca/D8B3F0B524C07A2E6BFD533EF6C23F52/issue/ -H 'Content-Type: application/json' -d '{ "commonName" : "ООО Рога и Копыта", "country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург",  "streetAddress" : "ул. Пушкина", "emailAddress" : "test@testemail.ru", "inn" : "123456789012", "givenName" : "Иван Иванович", "surname" : "Иванов", "snils" : "12334536322", "innLe" : "2234467890", "ogrn" : "2224567890123", "organizationName" : "ООО Рога и Копыта", "organizationUnitName" : "Директорат", "title" : "Предводитель", "algorithm" : 0, "subjectType" : 2, "ttlInDays" : 365}' --output test.pfx
+```
+
+Subject type 0:
+```
+{
+  "subjectType" : 0
+  "algorithm" : 0
+  "ttlInDays" : 365
+  "country" : "RU",
+  "localityName" : "Saint Petersburg",
+  "stateOrProvinceName" : "78 Saint Petersburg",
+  "streetAddress" : "Bolshaya Morskaya",
+  "emailAddress" : "mail@mail",
+  "inn" : "123456789012",
+  "snils" : "12334536322",
+  "givenName" : "Ivan Ivanovich",
+  "surname" : "Ivanov",
+}
+```
+Subject type 1:
+```
+{
+  "subjectType" : 1
+  "algorithm" : 0
+  "ttlInDays" : 365
+  "country" : "RU",
+  "localityName" : "Saint Petersburg",
+  "stateOrProvinceName" : "78 Saint Petersburg",
+  "streetAddress" : "Bolshaya Morskaya",
+  "emailAddress" : "mail@mail",
+  "inn" : "123456789012",
+  "snils" : "12334536322",
+  "givenName" : "Ivan Ivanovich",
+  "surname" : "Ivanov",
+  "ogrnip" : "2224567890123
+}
+```
+Subject type 2:
+```
+{
+  "subjectType" : 2,
+  "algorithm" : 0,
+  "ttlInDays" : 365,
+  "country" : "RU",
+  "localityName" : "Saint Petersburg",
+  "stateOrProvinceName" : "78 Saint Petersburg",
+  "streetAddress" : "Bolshaya Morskaya",
+  "emailAddress" : "mail@mail",
+  "inn" : "123456789012",
+  "snils" : "12334536322",
+  "givenName" : "Ivan Ivanovich",
+  "surname" : "Ivanov",
+  "innLe" : "1234567890",
+  "ogrn" : "2224567890123",
+  "organizationName" : "OOO Roga i kopita",
+  "organizationUnitName" : "",
+  "title" : "CEO"
+}
 ```
 
