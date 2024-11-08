@@ -40,6 +40,7 @@ const IndividualEntrepreneurCertificateRequest &
 Map(IndividualEntrepreneurCertificateRequest &dst,
     const IssueCertificateModel &src) {
   Map(static_cast<PhysicalPersonCertificateRequest &>(dst), src);
+  dst.commonName = src.organizationName;
   dst.ogrnip = src.ogrnip;
   return dst;
 }

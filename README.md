@@ -210,7 +210,8 @@ Subject type 1:
   "snils" : "12334536322",
   "givenName" : "Ivan Ivanovich",
   "surname" : "Ivanov",
-  "ogrnip" : "2224567890123
+  "ogrnip" : "2224567890123,
+  "organizationName" : "IP Ivanov Inan Ivanovich"
 }
 ```
 Subject type 2:
