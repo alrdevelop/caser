@@ -5,7 +5,6 @@
 #include <cstring>
 #include <ctime>
 #include <httpserver.hpp>
-#include <iostream>
 #include <memory>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
@@ -14,19 +13,15 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/txt_db.h>
-#include <ostream>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <string>
-#include <string_view>
 #include <utility>
-#include <vector>
 
 #include "base/icrypto_provider.h"
 #include "common/appsettings.h"
 #include "common/logger.h"
 #include "contracts/certificate_request.h"
-#include "contracts/enums.h"
 #include "http/get_ca.h"
 #include "http/get_ca_certificate.h"
 #include "http/get_certificate.h"

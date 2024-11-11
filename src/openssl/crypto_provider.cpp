@@ -3,9 +3,8 @@
 #include "defines.h"
 #include "subject_builder.h"
 #include "utils.h"
-#include <algorithm>
-#include <atomic>
 #include <ctime>
+#include <map>
 #include <memory>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
