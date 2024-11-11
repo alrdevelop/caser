@@ -109,7 +109,7 @@ inline void from_json(const json &json, IssueCertificateModel &model) {
   json.at("subjectType").get_to(model.subjectType);
   json.at("algorithm").get_to(model.algorithm);
   json.at("ttlInDays").get_to(model.ttlInDays);
-  
+  if(json.contains("pin")) json.at("pin").get_to(model.pin);
   if(json.contains("country")) json.at("country").get_to(model.country);
   if(json.contains("localityName")) json.at("localityName").get_to(model.localityName);
   if(json.contains("stateOrProvinceName")) json.at("stateOrProvinceName").get_to(model.stateOrProvinceName);

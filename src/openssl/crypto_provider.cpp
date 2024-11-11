@@ -74,7 +74,7 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
       .container = openssl::create_pfx(
           openssl::get_private_key(cert->privateKey),
           openssl::get_certificate(cert->certificate),
-          openssl::get_certificate(caInfo.certificate), nullptr),
+          openssl::get_certificate(caInfo.certificate), nullptr, req.pin.data()),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
   return std::move(PKCS12ContainerUPtr(result));
@@ -89,7 +89,7 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
       .container = openssl::create_pfx(
           openssl::get_private_key(cert->privateKey),
           openssl::get_certificate(cert->certificate),
-          openssl::get_certificate(caInfo.certificate), nullptr),
+          openssl::get_certificate(caInfo.certificate), nullptr, req.pin.data()),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
   return std::move(PKCS12ContainerUPtr(result));
@@ -104,7 +104,7 @@ PKCS12ContainerUPtr OpensslCryptoProvider::GenerateClientCertitificate(
       .container = openssl::create_pfx(
           openssl::get_private_key(cert->privateKey),
           openssl::get_certificate(cert->certificate),
-          openssl::get_certificate(caInfo.certificate), nullptr),
+          openssl::get_certificate(caInfo.certificate), nullptr, req.pin.data()),
       .serialNumber = cert->serialNumber,
       .thumbprint = cert->thumbprint};
   return std::move(PKCS12ContainerUPtr(result));

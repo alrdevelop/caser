@@ -19,6 +19,7 @@ using namespace datetime;
         std::string_view streetAddress;
         std::string_view emailAddress;
         uint16_t ttlInDays{365};
+        std::string_view pin;
     };
 
     struct PhysicalPersonCertificateRequest : public CertificateRequestBase {

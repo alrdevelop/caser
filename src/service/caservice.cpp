@@ -33,6 +33,7 @@ Map(PhysicalPersonCertificateRequest &dst, const IssueCertificateModel &src) {
   dst.snils = src.snils;
   dst.givenName = src.givenName;
   dst.surname = src.surname;
+  dst.pin = src.pin;
   return dst;
 }
 
