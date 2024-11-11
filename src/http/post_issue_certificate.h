@@ -38,11 +38,11 @@ protected:
   HttpResponsePtr Handle(
       const std::pair<std::string_view, service::models::IssueCertificateModel>
           &args) override {
-    auto cont = _caService->CreateClientCertificate(args.first, args.second);
+    auto result = _caService->CreateClientCertificate(args.first, args.second);
 
-    if (cont == nullptr)
+    if (result == nullptr)
       return HttpResponsePtr(new httpserver::string_response("", 404));
-    return HttpResponsePtr(new FileResponse(cont->container, 200));
+    return HttpResponsePtr(new FileResponse(std::format("{}.pfx", result->serialNumber), result->container, 200));
   }
 
 private:
