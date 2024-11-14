@@ -61,12 +61,12 @@ subjectTypeEnum:
 ## API
 
 ### HTTP GET ca/{caSerial}/certificate
-- caSerial - CA serial number
-Return CA certificate file in BER encoding.
+- caSerial - CA serial number.
+Returns CA certificate file.
 
 ### HTTP GET ca/{caSerial}
-- caSerial - CA certificate serial number
-Return CA data model.
+- caSerial - CA certificate serial number.
+Returns CA data model.
 ```
 {
   serial : string
@@ -78,8 +78,8 @@ Return CA data model.
 
 ```
 ### HTTP GET certificate/{serial}
-- serial - Certificate serial number
-Return certificate data model.
+- serial - Certificate serial number.
+Returns certificate data model.
 ```
 {
   serial : string
@@ -92,8 +92,8 @@ Return certificate data model.
 
 ```
 ### HTTP GET certificates/{serial}
-- serial - Certificate serial number
-Return certificates data model array.
+- serial - Certificate serial number.
+Returns certificates data model array.
 ```
 {[{
   serial : string
@@ -107,13 +107,13 @@ Return certificates data model array.
 ```
 
 ### HTTP GET crl/{crlFile}
-- crlFile - CRL file name (***template: {crlSerial}.crl***)
-Return CRL file.
+- crlFile - CRL file name (***template: {crlSerial}.crl***).
+Returns CRL file.
 This endpoint used in certificate distribution points.
 
 ### HTTP GET crt/{crtFile}
-- crtFile - CA certificate file name (***template: {crtSerial}.crt***)
-Return CA certificate file.
+- crtFile - CA certificate file name (***template: {crtSerial}.crt***).
+Returns CA certificate file.
 This endpoint used in certificate distribution points.
 
 ### HTTP POST ca/create/
