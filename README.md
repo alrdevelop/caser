@@ -175,7 +175,7 @@ If success, returns PKCS12 container file
 Example:
 СURL request:
 ```
-curl -X POST http://localhost:8080/ca/D8B3F0B524C07A2E6BFD533EF6C23F52/issue/ -H 'Content-Type: application/json' -d '{ "commonName" : "ООО Рога и Копыта", "country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург",  "streetAddress" : "ул. Пушкина", "emailAddress" : "test@testemail.ru", "inn" : "123456789012", "givenName" : "Иван Иванович", "surname" : "Иванов", "snils" : "12334536322", "innLe" : "2234467890", "ogrn" : "2224567890123", "organizationName" : "ООО Рога и Копыта", "organizationUnitName" : "Директорат", "title" : "Предводитель", "algorithm" : 0, "subjectType" : 2, "ttlInDays" : 365}' --output test.pfx
+curl -X POST http://localhost:8080/ca/D8B3F0B524C07A2E6BFD533EF6C23F52/issue/ -H 'Content-Type: application/json' -d '{ "commonName" : "ООО Рога и Копыта", "country" : "RU", "stateOrProvinceName" : "78 г.Санкт-Петербург", "localityName" : "Санкт-Петербург",  "streetAddress" : "ул. Пушкина", "emailAddress" : "test@testemail.ru", "inn" : "123456789012", "givenName" : "Иван Иванович", "surname" : "Иванов", "snils" : "12334536322", "innLe" : "2234467890", "ogrn" : "2224567890123", "organizationName" : "ООО Рога и Копыта", "organizationUnitName" : "Директорат", "title" : "Предводитель", "algorithm" : 0, "subjectType" : 2, "ttlInDays" : 365, "pin" : "you_secret_pin_for_pfx"}' --output test.pfx
 ```
 
 Subject type 0:
@@ -193,6 +193,7 @@ Subject type 0:
   "snils" : "12334536322",
   "givenName" : "Ivan Ivanovich",
   "surname" : "Ivanov",
+  "pin" : "you_secret_pin_for_pfx"
 }
 ```
 Subject type 1:
@@ -210,8 +211,9 @@ Subject type 1:
   "snils" : "12334536322",
   "givenName" : "Ivan Ivanovich",
   "surname" : "Ivanov",
-  "ogrnip" : "2224567890123,
-  "organizationName" : "IP Ivanov Inan Ivanovich"
+  "ogrnip" : "2224567890123",
+  "organizationName" : "IP Ivanov Inan Ivanovich",
+  "pin" : "you_secret_pin_for_pfx"
 }
 ```
 Subject type 2:
@@ -233,7 +235,8 @@ Subject type 2:
   "ogrn" : "2224567890123",
   "organizationName" : "OOO Roga i kopita",
   "organizationUnitName" : "",
-  "title" : "CEO"
+  "title" : "CEO",
+  "pin" : "you_secret_pin_for_pfx"
 }
 ```
 
