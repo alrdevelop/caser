@@ -54,9 +54,9 @@ algorithmEnum:
 - 1 - GOST2012_512
 
 subjectTypeEnum:
-- 0 - ФЛ
-- 1 - ИП
-- 2 - ЮЛ
+- 0 - Physical person
+- 1 - Individual entrepreneur
+- 2 - Juridical person
 
 ## API
 
