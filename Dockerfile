@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-LABEL Name=carservice Version=1.0.1
+LABEL Name=caserver Version=0.1.0
 
 #Install common packages
 RUN apt-get upgrade && apt-get update \
