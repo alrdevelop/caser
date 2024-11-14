@@ -135,6 +135,9 @@ Input model:
 
 }
 ```
+
+PublicUrl used for certficate distribution points (CRL, CRT access). You CSP must have access to this URL. URL must be in next format http://example.com do not use back slash at end of URL (http://example.com/).
+
 Example:
 
 СURL request:
