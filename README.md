@@ -243,3 +243,13 @@ Subject type 2:
 }
 ```
 
+### HTTP POST certificate/revoke/
+
+Revoke client certificicate.
+Input model:
+```
+{
+  serial : string
+}
+```
+

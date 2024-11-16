@@ -278,6 +278,14 @@ std::vector<std::byte> CaService::InvalidateCrl(const std::string &caSerial) {
   return crl.get()->content;
 }
 
+void CaService::RevokeCertificate(const RevokeCertificateModel& model) {
+  auto cert = _db->GetCertificate(model.serial);
+  if(cert == nullptr) throw std::runtime_error("Certificate not found.");
+  auto revokationDate = datetime::utc_now();
+  _db->MakeCertificateRevoked(cert->serial, revokationDate);
+}
+
+
 CaInfo CaService::GetCaInfo(const std::string_view &caSerial) {
   auto caCert = _db->GetCa(caSerial.data());
   if (caCert == nullptr)

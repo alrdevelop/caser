@@ -36,6 +36,8 @@ public:
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const IndividualEntrepreneurCertificateRequest& req);
   PKCS12ContainerUPtr CreateClientCertificate(const std::string_view& caSerial, const PhysicalPersonCertificateRequest& req);
 
+  void RevokeCertificate(const RevokeCertificateModel& model);
+
 private:
   CaInfo GetCaInfo(const std::string_view& caSerial);
   void SaveClientCertificate(const std::string_view& caSerial, const std::string_view& commonName, const PKCS12ContainerUPtr& container);

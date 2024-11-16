@@ -35,7 +35,7 @@ public:
   void AddCA(const CertificateAuthorityModel &ca) override;
 
   void MakeCertificateRevoked(const std::string &serial,
-                              const std::string &revokeDate) override;
+                              const DateTimePtr revokeDate) override;
   std::vector<CertificateModelPtr>
   GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) override;
   CertificateModelPtr GetLastRevoked(const std::string &caSerial) override;

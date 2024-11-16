@@ -335,7 +335,7 @@ void PgDatabase::AddCA(const CertificateAuthorityModel &ca) {
 }
 
 void PgDatabase::MakeCertificateRevoked(const std::string &serial,
-                                        const std::string &revokeDate) {
+                                        const DateTimePtr revokeDate) {
   try {
     ConnectionScope scope(_connectionPool);
     auto conn = scope.GetConnection();

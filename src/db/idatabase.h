@@ -30,7 +30,7 @@ public:
   virtual CrlModelPtr GetActualCrl(const std::string &caSerial) = 0;
 
   virtual void MakeCertificateRevoked(const std::string &serial,
-                                      const std::string &revokeDate) = 0;
+                                      const DateTimePtr revokeDate) = 0;
   virtual std::vector<CertificateModelPtr>
   GetRevokedListOrderByRevokeDateDesc(const std::string &caSerial) = 0;
   virtual CertificateModelPtr GetLastRevoked(const std::string &caSerial) = 0;

@@ -68,15 +68,24 @@ struct IssueCertificateModel {
   std::string pin;
 };
 
+struct RevokeCertificateModel {
+  std::string serial;
+};
+
 using CreateCertificateAuthorityModelPtr =
     std::shared_ptr<CreateCertificateAuthorityModel>;
 using StoredCertificateAuthorityModelPtr =
     std::shared_ptr<StoredCertificateAuthorityModel>;
 using StoredCertificateModelPtr = std::shared_ptr<StoredCertificateModel>;
 using IssueCertificateModelPtr = std::shared_ptr<IssueCertificateModel>;
+using RevokeCertificateModelPtr = std::shared_ptr<RevokeCertificateModel>;
 
 // TODO move to separated files
 using json = nlohmann::json;
+
+inline void from_json(const json &json, RevokeCertificateModel &model) {
+  json.at("serial").get_to(model.serial);
+}
 
 inline void from_json(const json &json, IssueCertificateModelPtr &model) {
   json.at("subjectType").get_to(model->subjectType);

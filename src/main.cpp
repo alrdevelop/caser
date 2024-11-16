@@ -30,6 +30,7 @@
 #include "http/get_crt.h"
 #include "http/post_create_ca.h"
 #include "http/post_issue_certificate.h"
+#include "http/post_revoke_certificate.h"
 #include "openssl/crypto_provider.h"
 #include "postgre/pgdatabase.h"
 #include "service/caservice.h"
@@ -69,7 +70,8 @@ int main() {
     auto getCa = std::make_shared<http::GetCaEndpoint>(caService);
     auto getCaCert = std::make_shared<http::GetCaCertificateEndpoint>(caService);
     auto issueCert = std::make_shared<http::IssueCertificateEndpoint>(caService);
-    auto  createCa = std::make_shared<http::CreateCaEndpoint>(caService);
+    auto createCa = std::make_shared<http::CreateCaEndpoint>(caService);
+    auto revoke = std::make_shared<http::RevokeCertificateEndpoint>(caService);
     getCrl->Register(ws);
     getCrt->Register(ws);
     getCertificate->Register(ws);
@@ -78,6 +80,7 @@ int main() {
     getCaCert->Register(ws);
     issueCert->Register(ws);
     createCa->Register(ws);
+    revoke->Register(ws);
 
     LOG_INFO("Server started.")
     ws.start(true);
@@ -85,5 +88,6 @@ int main() {
   } catch (std::exception &ex) {
     LOG_ERROR("{}", ex.what());
   }
+    LOG_INFO("Server stopped.")
   return 0;
 }
