@@ -302,9 +302,8 @@ void PgDatabase::AddCertificate(const CertificateModel &cert) {
         "INSERT INTO certificates(\"serial\", \"thumbprint\", \"caSerial\", "
         "\"commonName\", \"issueDate\", \"revokeDate\") "
         "VALUES ($1, $2, $3, $4, $5, $6)";
-    conn->prepare("insert_cert", query);
     pqxx::work tran(*conn);
-    auto result = tran.exec_prepared("insert_cert", cert.serial,
+    tran.exec_params(query, cert.serial,
                                      cert.thumbprint, cert.caSerial,
                                      cert.commonName, cert.issueDate, nullptr);
     tran.commit();
@@ -321,10 +320,8 @@ void PgDatabase::AddCA(const CertificateAuthorityModel &ca) {
         "INSERT INTO ca(\"serial\", \"thumbprint\", \"commonName\", "
         "\"issueDate\", \"certificate\", \"privateKey\", \"publicUrl\" ) "
         "VALUES ($1, $2, $3, $4, $5, $6, $7)";
-    conn->prepare("insert_ca", query);
     pqxx::work tran(*conn);
-    auto result = tran.exec_prepared(
-        "insert_ca", ca.serial, ca.thumbprint, ca.commonName, ca.issueDate,
+    tran.exec_params(query, ca.serial, ca.thumbprint, ca.commonName, ca.issueDate,
         pqxx::binary_cast(ca.certificate.data(), ca.certificate.size()),
         pqxx::binary_cast(ca.privateKey.data(), ca.privateKey.size()),
         ca.publicUrl);
@@ -341,9 +338,8 @@ void PgDatabase::MakeCertificateRevoked(const std::string &serial,
     auto conn = scope.GetConnection();
     static auto query = "UPDATE certificates SET \"revokeDate\" = $1"
                         "WHERE UPPER(serial) = UPPER($2)";
-    conn->prepare("revoke_cert", query);
     pqxx::work tran(*conn);
-    auto result = tran.exec_prepared("revoke_cert", serial, revokeDate);
+    tran.exec_params(query, revokeDate, serial);
     tran.commit();
   } catch (...) {
     throw;
@@ -357,10 +353,8 @@ void PgDatabase::AddCrl(const CrlModel &crl) {
     static auto query = "INSERT INTO crl(\"caSerial\", \"number\", "
                         "\"issueDate\", \"expireDate\", \"lastSerial\", \"content\") "
                         "VALUES ($1, $2, $3, $4, $5, $6)";
-    conn->prepare("insert_crl", query);
     pqxx::work tran(*conn);
-    auto result = tran.exec_prepared(
-        "insert_crl", crl.caSerial, crl.number, crl.issueDate, crl.expireDate, crl.lastSerial,
+    tran.exec_params(query, crl.caSerial, crl.number, crl.issueDate, crl.expireDate, crl.lastSerial,
         pqxx::binary_cast(crl.content.data(), crl.content.size()));
     tran.commit();
 
