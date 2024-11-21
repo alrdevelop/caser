@@ -1,0 +1,89 @@
+openapi: '3.0.3'
+info:
+  title: CASERVER API
+  version: '1.0'
+servers:
+  - url: https://caserver/
+
+paths:
+  /ca/{caSerial}/certificate:
+    get:
+      description: 'Get CA certificate file'
+      parameters:
+        - name: caSerial
+          in: path
+          description: CA serial number
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: CA certificate file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /ca/{caSerial}:
+    get:
+      description: 'Get CA certificate data'
+      parameters:
+        - name: caSerial
+          in: path
+          description: CA serial number
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: CA certificate data model
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    CaCertificateModel:
+      type: object
+      properties:
+        serial:
+          type: string
+          example: D883F0BD883F0BD883F0BD883F0B
+        thumbprint:
+          type: string
+          example: FF033122FF033122FF033122FF033122
+        caSerial:
+          type: string
+          example: 13D23551213D23551213D235512
+        commonName:
+          type: string
+          example: Simple CA
+        issueDate:
+          type: string
+          format: date-time
+          example: 2012-02-20 14:30:33Z
+    CertificateModel:
+      type: object
+      properties:
+        serial:
+          type: string
+          example: D883F0BD883F0BD883F0BD883F0B
+        thumbprint:
+          type: string
+          example: FF033122FF033122FF033122FF033122
+        caSerial:
+          type: string
+          example: 13D23551213D23551213D235512
+        commonName:
+          type: string
+          example: Simple CA
+        issueDate:
+          type: string
+          format: date-time
+          example: 2012-02-20 14:30:33Z
+        revokeDate:
+          type: string
+          format: date-time
+          example: 2012-02-20 14:30:33Z
