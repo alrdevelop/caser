@@ -4,12 +4,13 @@
 #include <format>
 #include <regex>
 #include <string>
+#include <vector>
 
 namespace http {
 
 namespace regex_patterns {
-static std::regex serial{"^[a-zA-Z0-9_]{1,250}$"};
-static std::regex thumbprint{"^[a-zA-Z0-9_]{1,250}$"};
+static const char *serial{"^[a-zA-Z0-9_]{1,250}$"};
+static const char *thumbprint{"^[a-zA-Z0-9_]{1,250}$"};
 } // namespace regex_patterns
 
 struct ValidationRuleResult {
@@ -30,7 +31,8 @@ protected:
 
 class StringPatternRule : ValidationRule<std::string> {
 public:
-  StringPatternRule(const char *name, const char *pattern) : ValidationRule(name), _pattern(pattern) {}
+  StringPatternRule(const char *name, const char *pattern)
+      : ValidationRule(name), _pattern(pattern) {}
   ~StringPatternRule();
 
   const ValidationRuleResult Validate(const std::string &v) override {
@@ -47,6 +49,18 @@ public:
 
 private:
   std::string _pattern;
+};
+
+class SerialNumberRule : StringPatternRule {
+public:
+  SerialNumberRule()
+      : StringPatternRule("serialNumber", regex_patterns::serial) {}
+};
+
+class ThumbprintRule : StringPatternRule {
+public:
+  ThumbprintRule()
+      : StringPatternRule("thumbprint", regex_patterns::thumbprint) {}
 };
 
 } // namespace http
